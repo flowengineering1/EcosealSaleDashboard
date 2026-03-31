@@ -1,0 +1,1143 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sales Dashboard 2025–2026</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600;700&family=Space+Grotesk:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0d1117;--sur:#161b22;--card:#1c2128;--bdr:#30363d;--a:#f78166;--b:#79c0ff;--g:#56d364;--o:#ffa657;--txt:#e6edf3;--mu:#8b949e;--gold:#d4a853;}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--txt);font-family:'Sarabun',sans-serif;padding-bottom:60px;}
+.hdr{background:linear-gradient(135deg,#1a1f2e,#0d1117);border-bottom:1px solid var(--bdr);padding:22px 28px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;}
+.hdr h1{font-family:'Space Grotesk',sans-serif;font-size:1.4rem;font-weight:700;}.hdr h1 span{color:var(--b);}
+.hdr p{color:var(--mu);font-size:.8rem;margin-top:2px;}
+.badge{background:rgba(121,192,255,.12);color:var(--b);border:1px solid rgba(121,192,255,.3);border-radius:20px;padding:4px 12px;font-size:.75rem;font-weight:600;}
+.tabs{display:flex;gap:3px;padding:12px 28px 0;border-bottom:1px solid var(--bdr);background:var(--sur);flex-wrap:wrap;}
+.tab{padding:8px 16px;border-radius:8px 8px 0 0;cursor:pointer;font-size:.83rem;font-weight:600;color:var(--mu);border:1px solid transparent;border-bottom:none;transition:all .2s;white-space:nowrap;}
+.tab:hover{color:var(--txt);background:var(--card);}
+.tab.active{color:var(--b);background:var(--bg);border-color:var(--bdr);border-bottom-color:var(--bg);margin-bottom:-1px;}
+.pg{display:none;padding:22px 28px;}.pg.active{display:block;}
+.kgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:20px;}
+.kpi{background:var(--card);border:1px solid var(--bdr);border-radius:11px;padding:16px;position:relative;overflow:hidden;}
+.kpi::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;}
+.kpi.bl::before{background:var(--b);}.kpi.gr::before{background:var(--g);}.kpi.or::before{background:var(--o);}.kpi.re::before{background:var(--a);}.kpi.go::before{background:var(--gold);}
+.kl{font-size:.7rem;color:var(--mu);font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;}
+.kv{font-family:'Space Grotesk',sans-serif;font-size:1.6rem;font-weight:700;line-height:1;}
+.ks{font-size:.75rem;color:var(--mu);margin-top:4px;}.up{color:var(--g);}.dn{color:var(--a);}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;}
+@media(max-width:800px){.g2{grid-template-columns:1fr;}}
+.cc{background:var(--card);border:1px solid var(--bdr);border-radius:11px;padding:16px;margin-bottom:16px;}
+.cc h3{font-size:.78rem;font-weight:700;color:var(--mu);text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px;display:flex;align-items:center;gap:6px;}
+.dot{width:7px;height:7px;border-radius:50%;display:inline-block;flex-shrink:0;}
+canvas{max-height:270px;}
+/* Table */
+.tw{overflow-x:auto;}
+table{width:100%;border-collapse:collapse;font-size:.8rem;}
+thead th{background:var(--sur);color:var(--mu);font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.4px;padding:8px 10px;text-align:left;border-bottom:1px solid var(--bdr);white-space:nowrap;cursor:pointer;user-select:none;transition:color .15s,background .15s;}
+thead th:hover{color:var(--b);background:rgba(121,192,255,.07);}
+thead th.sort-asc::after{content:' ▲';color:var(--b);font-size:.6rem;}
+thead th.sort-desc::after{content:' ▼';color:var(--b);font-size:.6rem;}
+thead th.no-sort{cursor:default;}
+thead th.no-sort:hover{color:var(--mu);background:var(--sur);}
+tbody tr{border-bottom:1px solid rgba(48,54,61,.35);transition:background .12s;cursor:pointer;}
+tbody tr:hover{background:rgba(121,192,255,.06);}
+td{padding:8px 10px;max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+td.r{text-align:right;font-family:'Space Grotesk',sans-serif;}
+.rk{font-family:'Space Grotesk',sans-serif;font-weight:700;color:var(--mu);font-size:.75rem;}
+.rk1{color:var(--gold);}.rk2{color:#c0c0c0;}.rk3{color:#cd7f32;}
+/* Pills */
+.p{display:inline-block;padding:2px 7px;border-radius:20px;font-size:.7rem;font-weight:700;font-family:'Space Grotesk',sans-serif;}
+.pg{background:rgba(86,211,100,.15);color:var(--g);}.po{background:rgba(255,166,87,.15);color:var(--o);}.pr{background:rgba(247,129,102,.15);color:var(--a);}.pb{background:rgba(121,192,255,.15);color:var(--b);}.pgo{background:rgba(212,168,83,.15);color:var(--gold);}
+/* Sec */
+.st{font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.7px;color:var(--mu);margin:20px 0 9px;padding-bottom:6px;border-bottom:1px solid var(--bdr);}
+/* Group cards */
+.ggrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(310px,1fr));gap:14px;margin-bottom:18px;}
+.gcard{background:var(--card);border:1px solid var(--bdr);border-radius:11px;overflow:hidden;cursor:pointer;transition:border-color .2s,transform .12s;}
+.gcard:hover{border-color:var(--b);transform:translateY(-2px);}
+.gcard.exp{border-color:var(--b);}
+.gch{padding:13px 15px;display:flex;align-items:center;gap:10px;}
+.gci{flex:1;min-width:0;}
+.gcn{font-weight:700;font-size:.87rem;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.gcm{font-size:.7rem;color:var(--mu);}
+.gcs{display:flex;gap:12px;flex-shrink:0;}
+.gcst{text-align:right;}
+.gcsv{font-family:'Space Grotesk',sans-serif;font-size:.9rem;font-weight:700;}
+.gcsl{font-size:.62rem;color:var(--mu);text-transform:uppercase;}
+.gcarr{color:var(--mu);font-size:.8rem;transition:transform .2s;flex-shrink:0;}
+.gcard.exp .gcarr{transform:rotate(180deg);}
+.gcb{display:none;border-top:1px solid var(--bdr);padding:13px 15px;background:rgba(255,255,255,.015);}
+.gcard.exp .gcb{display:block;}
+/* Product type tabs inside card */
+.ptabs{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:10px;}
+.ptab{padding:4px 10px;border-radius:6px;font-size:.7rem;font-weight:600;cursor:pointer;background:var(--sur);color:var(--mu);border:1px solid var(--bdr);transition:all .15s;}
+.ptab:hover{color:var(--txt);}
+.ptab.active{background:rgba(121,192,255,.15);color:var(--b);border-color:rgba(121,192,255,.4);}
+.plist{display:none;}.plist.active{display:block;}
+/* Mini table */
+.mt{width:100%;border-collapse:collapse;font-size:.76rem;}
+.mt th{color:var(--mu);font-size:.65rem;font-weight:700;text-transform:uppercase;padding:4px 7px;text-align:left;border-bottom:1px solid var(--bdr);}
+.mt tbody tr{border-bottom:1px solid rgba(48,54,61,.25);cursor:pointer;transition:background .12s;}
+.mt tbody tr:hover{background:rgba(121,192,255,.07);}
+.mt td{padding:5px 7px;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.mt td.r{text-align:right;font-family:'Space Grotesk',sans-serif;}
+.hint{font-size:.68rem;color:var(--mu);margin-bottom:7px;font-style:italic;}
+.pbox{margin-top:9px;padding:7px 9px;background:rgba(121,192,255,.07);border-left:2px solid var(--b);border-radius:0 5px 5px 0;font-size:.75rem;color:var(--b);line-height:1.5;}
+/* Brands */
+.blist{display:flex;flex-direction:column;gap:8px;}
+.brow{display:flex;align-items:center;gap:9px;cursor:pointer;padding:4px 6px;border-radius:6px;transition:background .12s;}
+.brow:hover{background:rgba(121,192,255,.06);}
+.bn{width:90px;font-size:.76rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex-shrink:0;}
+.bbw{flex:1;background:var(--sur);border-radius:3px;height:6px;overflow:hidden;}
+.bb{height:100%;border-radius:3px;}
+.bv{width:60px;text-align:right;font-size:.72rem;font-family:'Space Grotesk',sans-serif;color:var(--mu);}
+/* Alert */
+.abar{background:rgba(247,129,102,.08);border:1px solid rgba(247,129,102,.25);border-radius:9px;padding:10px 13px;margin-bottom:16px;font-size:.8rem;color:var(--a);display:flex;align-items:center;gap:7px;}
+/* Modal */
+.mo{display:none;position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:1000;align-items:center;justify-content:center;padding:16px;}
+.mo.open{display:flex;}
+.mb{background:var(--card);border:1px solid var(--bdr);border-radius:14px;width:100%;max-width:700px;max-height:90vh;overflow-y:auto;padding:24px;}
+.mhdr{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:16px;gap:10px;}
+.mtit{font-family:'Space Grotesk',sans-serif;font-size:1rem;font-weight:700;line-height:1.4;}
+.msub{font-size:.73rem;color:var(--mu);margin-top:3px;}
+.mclose{background:var(--sur);border:1px solid var(--bdr);color:var(--mu);width:30px;height:30px;border-radius:7px;cursor:pointer;font-size:.9rem;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.mclose:hover{color:var(--txt);}
+.mkpis{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px;}
+.mkpi{background:var(--sur);border-radius:7px;padding:10px;text-align:center;}
+.mkv{font-family:'Space Grotesk',sans-serif;font-size:1rem;font-weight:700;}
+.mkl{font-size:.65rem;color:var(--mu);text-transform:uppercase;margin-top:2px;}
+.mst{font-size:.67rem;font-weight:700;color:var(--mu);text-transform:uppercase;letter-spacing:.5px;margin:12px 0 7px;padding-bottom:5px;border-bottom:1px solid var(--bdr);}
+.ibox{border-radius:0 5px 5px 0;padding:9px 11px;font-size:.8rem;line-height:1.6;}
+/* Insight cards */
+.insight-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px;margin-bottom:16px;}
+.icard{background:var(--card);border:1px solid var(--bdr);border-radius:11px;padding:14px;}
+.icard-tag{display:inline-block;font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;padding:2px 7px;border-radius:4px;margin-bottom:7px;}
+.tag-warn{background:rgba(247,129,102,.2);color:var(--a);}
+.tag-opp{background:rgba(86,211,100,.2);color:var(--g);}
+.tag-info{background:rgba(121,192,255,.2);color:var(--b);}
+.tag-gold{background:rgba(212,168,83,.2);color:var(--gold);}
+.icard h4{font-size:.85rem;font-weight:700;margin-bottom:5px;}
+.icard p{font-size:.78rem;color:var(--mu);line-height:1.5;}
+/* Clickable donut segments hint */
+.clkable{cursor:pointer;}
+.pg-override{display:block!important;} /* override page rule for pills */
+</style>
+</head>
+<body>
+<div class="hdr">
+  <div><h1>📦 Sales &amp; Stock <span>Dashboard</span></h1><p>2025–2026 · คลิกกราฟ / การ์ด / แถว เพื่อดูรายละเอียด</p></div>
+  <div class="badge">มี.ค. 2026</div>
+</div>
+<div class="tabs">
+  <div class="tab active" onclick="sw('ov')">📊 ภาพรวม</div>
+  <div class="tab" onclick="sw('ts')">🏆 Top 100 สินค้าขายดี</div>
+  <div class="tab" onclick="sw('sk')">📦 Stock Alert</div>
+  <div class="tab" onclick="sw('mk')">🎯 การตลาดรายหมวด</div>
+  <div class="tab" onclick="sw('in')">💡 Insights &amp; แนะนำ</div>
+</div>
+
+<!-- ====== OVERVIEW ====== -->
+<div class="pg active" id="pg-ov">
+  <div class="kgrid">
+    <div class="kpi bl"><div class="kl">ยอดขายรวม 2025</div><div class="kv" style="color:var(--b)">฿178.6M</div><div class="ks">12 เดือน</div></div>
+    <div class="kpi gr"><div class="kl">Gross Profit 2025</div><div class="kv" style="color:var(--g)">฿103.5M</div><div class="ks">GP% เฉลี่ย <span class="up">57.8%</span></div></div>
+    <div class="kpi or"><div class="kl">ยอดขาย 2026 (Q1)</div><div class="kv" style="color:var(--o)">฿39.6M</div><div class="ks">ม.ค.–มี.ค. 2026</div></div>
+    <div class="kpi re"><div class="kl">มี.ค. 2026 vs 2025</div><div class="kv" style="color:var(--a)">-28.5%</div><div class="ks"><span class="dn">฿10.8M vs ฿15.1M</span></div></div>
+    <div class="kpi go"><div class="kl">Item Groups</div><div class="kv" style="color:var(--gold)">49</div><div class="ks">หมวดสินค้า</div></div>
+  </div>
+  <div class="g2">
+    <div class="cc"><h3><span class="dot" style="background:var(--b)"></span>ยอดขายรายเดือน 2025</h3><canvas id="cMon"></canvas></div>
+    <div class="cc">
+      <h3><span class="dot" style="background:var(--g)"></span>Top 8 หมวด — <span style="color:var(--b);font-style:italic;font-size:.75rem">คลิกที่ส่วนเพื่อดูสินค้า</span></h3>
+      <canvas id="cGrp" class="clkable"></canvas>
+    </div>
+  </div>
+  <div class="g2">
+    <div class="cc">
+      <h3><span class="dot" style="background:var(--gold)"></span>Top Brand — <span style="color:var(--b);font-style:italic;font-size:.75rem">คลิกที่แถบเพื่อดูสินค้า</span></h3>
+      <div class="blist" id="bList"></div>
+    </div>
+    <div class="cc"><h3><span class="dot" style="background:var(--a)"></span>GP% Top 5 หมวด</h3><canvas id="cGP"></canvas></div>
+  </div>
+</div>
+
+<!-- ====== TOP 100 ====== -->
+<div class="pg" id="pg-ts">
+  <div class="kgrid">
+    <div class="kpi bl"><div class="kl">อันดับ 1</div><div class="kv" style="color:var(--b);font-size:.9rem;line-height:1.4">SEAL EPDM T-RING 150mm</div><div class="ks">฿1.85M · GP 53.7%</div></div>
+    <div class="kpi gr"><div class="kl">GP% สูงสุด Top100</div><div class="kv" style="color:var(--g);font-size:.9rem">T38 DUST WIPER 120</div><div class="ks">GP 96.7%</div></div>
+    <div class="kpi or"><div class="kl">Transaction มากสุด</div><div class="kv" style="color:var(--o);font-size:.9rem">T780 DAS 80X60</div><div class="ks">648 ครั้ง</div></div>
+    <div class="kpi go"><div class="kl">รวม Top 100</div><div class="kv" style="color:var(--gold)">100</div><div class="ks">คลิกแถวดูรายละเอียด</div></div>
+  </div>
+  <div class="cc"><h3><span class="dot" style="background:var(--b)"></span>Top 10 Sale vs GP%</h3><canvas id="cT10" style="max-height:290px"></canvas></div>
+  <div class="cc">
+    <h3><span class="dot" style="background:var(--g)"></span>Top 100 สินค้าขายดี</h3>
+    <p class="hint">👆 คลิกแถวเพื่อดูรายละเอียด</p>
+    <div style="margin-bottom:10px;display:flex;gap:8px;flex-wrap:wrap">
+      <span style="font-size:.75rem;color:var(--mu)">กรอง: </span>
+      <button onclick="filterT('all')" id="fb-all" style="padding:3px 10px;border-radius:5px;font-size:.72rem;cursor:pointer;background:rgba(121,192,255,.2);color:var(--b);border:1px solid rgba(121,192,255,.4);font-family:'Sarabun',sans-serif">ทั้งหมด</button>
+      <button onclick="filterT('HS')" id="fb-HS" style="padding:3px 10px;border-radius:5px;font-size:.72rem;cursor:pointer;background:var(--sur);color:var(--mu);border:1px solid var(--bdr);font-family:'Sarabun',sans-serif">HS</button>
+      <button onclick="filterT('OR')" id="fb-OR" style="padding:3px 10px;border-radius:5px;font-size:.72rem;cursor:pointer;background:var(--sur);color:var(--mu);border:1px solid var(--bdr);font-family:'Sarabun',sans-serif">OR</button>
+      <button onclick="filterT('OS')" id="fb-OS" style="padding:3px 10px;border-radius:5px;font-size:.72rem;cursor:pointer;background:var(--sur);color:var(--mu);border:1px solid var(--bdr);font-family:'Sarabun',sans-serif">OS</button>
+      <button onclick="filterT('PN')" id="fb-PN" style="padding:3px 10px;border-radius:5px;font-size:.72rem;cursor:pointer;background:var(--sur);color:var(--mu);border:1px solid var(--bdr);font-family:'Sarabun',sans-serif">PN</button>
+    </div>
+    <div class="tw"><table id="tTop"></table></div>
+  </div>
+</div>
+
+<!-- ====== STOCK ====== -->
+<div class="pg" id="pg-sk">
+  <div class="abar">⚠️ สินค้า Transaction สูง = ความต้องการสูง · มี.ค. 2026 ยอดลดลง -28.5% จากปีก่อน ต้องเร่ง Promote</div>
+  <div class="kgrid">
+    <div class="kpi bl"><div class="kl">High-Demand #1</div><div class="kv" style="color:var(--b);font-size:.95rem">T780 DAS 80X60</div><div class="ks">648 tx</div></div>
+    <div class="kpi re"><div class="kl">GP% ต่ำสุด (หมวด)</div><div class="kv" style="color:var(--a)">OR-SILICONE</div><div class="ks">31.4%</div></div>
+    <div class="kpi gr"><div class="kl">GP% สูงสุด (หมวด)</div><div class="kv" style="color:var(--g)">OR-FFKM</div><div class="ks">92.8%</div></div>
+    <div class="kpi or"><div class="kl">มี.ค. 2026</div><div class="kv" style="color:var(--o)">฿10.8M</div><div class="ks"><span class="dn">↓ จาก ฿15.1M</span></div></div>
+  </div>
+  <div class="g2">
+    <div class="cc"><h3><span class="dot" style="background:var(--b)"></span>เปรียบเทียบ Q1 2025 vs 2026</h3><canvas id="cCmp"></canvas></div>
+    <div class="cc"><h3><span class="dot" style="background:var(--o)"></span>GP% Top 10 หมวด</h3><canvas id="cGPb"></canvas></div>
+  </div>
+  <div class="cc">
+    <h3><span class="dot" style="background:var(--a)"></span>สินค้า High-Demand ต้องดูแล Stock</h3>
+    <p class="hint">👆 คลิกแถวเพื่อดูรายละเอียด</p>
+    <div class="tw"><table id="tStk"></table></div>
+  </div>
+</div>
+
+<!-- ====== MARKETING ====== -->
+<div class="pg" id="pg-mk">
+  <div class="kgrid">
+    <div class="kpi bl"><div class="kl">หมวดหลัก</div><div class="kv" style="color:var(--b)">18</div><div class="ks">พร้อมแผนการตลาด</div></div>
+    <div class="kpi go"><div class="kl">หมวด GP% 70%+</div><div class="kv" style="color:var(--gold)">6</div><div class="ks">High-Margin</div></div>
+    <div class="kpi gr"><div class="kl">ยอดสูงสุด</div><div class="kv" style="color:var(--g)">OR-VITON</div><div class="ks">฿36.5M · GP 70%</div></div>
+    <div class="kpi or"><div class="kl">สินค้า GP 90%+</div><div class="kv" style="color:var(--o)">4+</div><div class="ks">โอกาสกำไรสูง</div></div>
+  </div>
+  <div class="st">🎯 คลิกที่การ์ดเพื่อขยาย เลือก Type/Brand เพื่อดู Top 20 สินค้า — คลิกสินค้าเพื่อดูรายละเอียด</div>
+  <div class="ggrid" id="gGrid"></div>
+</div>
+
+<!-- ====== INSIGHTS ====== -->
+<div class="pg" id="pg-in">
+  <div class="st">🔍 วิเคราะห์เชิงกลยุทธ์ — มุมมองเจ้าของกิจการ &amp; ทีม Marketing</div>
+  <div class="insight-grid" id="insGrid"></div>
+  <div class="st">📊 Business KPI ที่ควรติดตาม</div>
+  <div class="g2">
+    <div class="cc"><h3><span class="dot" style="background:var(--b)"></span>Revenue Trend 2025 vs 2026</h3><canvas id="cRev"></canvas></div>
+    <div class="cc"><h3><span class="dot" style="background:var(--gold)"></span>GP% per Brand (Top 6)</h3><canvas id="cBGP"></canvas></div>
+  </div>
+  <div class="st">📋 Action Plan แนะนำ 30/60/90 วัน</div>
+  <div class="cc">
+    <table id="tAction"></table>
+  </div>
+</div>
+
+<!-- MODAL -->
+<div class="mo" id="modal" onclick="closeMO(event)">
+  <div class="mb" id="mbox">
+    <div class="mhdr">
+      <div><div class="mtit" id="mtit"></div><div class="msub" id="msub"></div></div>
+      <button class="mclose" onclick="closeMObtn()">✕</button>
+    </div>
+    <div class="mkpis" id="mkpis"></div>
+    <div id="mbody"></div>
+  </div>
+</div>
+
+<script>
+// ===================== DATA =====================
+const PAL=['#79c0ff','#56d364','#ffa657','#f78166','#d4a853','#bc8cff','#39d0d8','#ff7b9c','#85e89d','#ffab70'];
+
+const top100=[
+  {r:1,code:'HS-OT-4969L',d:'SEAL EPDM T-RING 150X156X164/170X04/08',g:'HS-OTHER',br:'GD:LOCAL',s:1852500,q:3900,gp:53.7,tx:15},
+  {r:2,code:'OR-CV-08.00-V75-SC',d:'O-RING CORD VITON 08.00 V75 (SC)',g:'OR-CORD VITON',br:'GP:GAPI',s:1123941,q:1721,gp:55.4,tx:120},
+  {r:3,code:'HS-DA-0531',d:'T81 80X60X22.4X6.35',g:'HS-DOUBLE ACTING',br:'HL:HALLITE',s:1079051,q:5401,gp:77.7,tx:26},
+  {r:4,code:'OR-NB-051.00-03.00N7',d:'O-RING NBR 051.00X03.00 N70',g:'OR-NBR',br:'GP:GAPI',s:1074501,q:448529,gp:51.6,tx:75},
+  {r:5,code:'HS-WP-1296',d:'T38 DUST WIPER 120X132.2X7.2X12',g:'HS-WIPER SEAL',br:'HL:HALLITE',s:999014,q:869,gp:96.7,tx:50},
+  {r:6,code:'HS-DA-0506',d:'T780 DAS Piston seal 80X60X22.4',g:'HS-DOUBLE ACTING',br:'HL:HALLITE',s:941164,q:9713,gp:43.4,tx:648},
+  {r:7,code:'HS-OT-5303L',d:'SEAL VITON T-RING 150X156.2X163.8X170X03.5/08',g:'HS-OTHER',br:'GD:LOCAL',s:796000,q:1010,gp:35.7,tx:3},
+  {r:8,code:'OR-GP-330B-64.00-11.00',d:'O-RING GPlast 330B 064.00X11.00',g:'OR-FFKM',br:'GP:GAPI',s:696000,q:12,gp:100.0,tx:1},
+  {r:9,code:'HS-RS-1073',d:'T605 20X28X5X5.7',g:'HS-ROD SEAL',br:'HL:HALLITE',s:679264,q:31485,gp:38.7,tx:62},
+  {r:10,code:'HS-WR-0045',d:'T506 BEARING STRIP 15X2.5',g:'HS-WEAR RING/BEARING',br:'HL:HALLITE',s:643047,q:1945,gp:64.4,tx:207},
+  {r:11,code:'OS-VN-800.00A-1',d:'V-RING NBR VA-800 (FORSHEDA)',g:'OS-V-RING NBR',br:'TB:TRELLEBORG',s:629500,q:50,gp:29.1,tx:5},
+  {r:12,code:'HS-WR-0049',d:'T506 BEARING STRIP 25X2.5',g:'HS-WEAR RING/BEARING',br:'HL:HALLITE',s:612944,q:1204,gp:60.1,tx:142},
+  {r:13,code:'OR-CV-07.00-V75-SC',d:'O-RING CORD VITON 07.00 V75 (SC)',g:'OR-CORD VITON',br:'GP:GAPI',s:601362,q:1020,gp:50.3,tx:87},
+  {r:14,code:'HS-DA-0527',d:'T81 63X47X18.4X6.35',g:'HS-DOUBLE ACTING',br:'HL:HALLITE',s:546692,q:3729,gp:47.4,tx:27},
+  {r:15,code:'OR-CV-10.00-V75-SC',d:'O-RING CORD VITON 10.00 V75 (SC)',g:'OR-CORD VITON',br:'GP:GAPI',s:509259,q:537,gp:49.0,tx:52},
+  {r:16,code:'HS-WR-0082',d:'SLYDRING 15.00X14.80X2.5 (L25 MTR)',g:'HS-WEAR RING/BEARING',br:'GP:GAPI',s:507442,q:365301,gp:65.2,tx:279},
+  {r:17,code:'OR-VI-146.00-07.60L7',d:'O-RING VITON 146.00X07.60 V70',g:'OR-VITON',br:'GD:LOCAL',s:505500,q:1820,gp:26.4,tx:8},
+  {r:18,code:'OS-VI-2526',d:'OIL SEAL VITON 500X540X20 SA',g:'OS-OIL SEAL VITON',br:'SG:SOG',s:484000,q:29,gp:45.1,tx:9},
+  {r:19,code:'OR-CV-06.00-V75-SC',d:'O-RING CORD VITON 06.00 V75 (SC)',g:'OR-CORD VITON',br:'GP:GAPI',s:469827,q:1120,gp:47.7,tx:115},
+  {r:20,code:'HS-WR-0101',d:'SLYDRING 09.70X09.50X2.5 (L25 MTR)',g:'HS-WEAR RING/BEARING',br:'GP:GAPI',s:462897,q:302479,gp:72.4,tx:376},
+  {r:21,code:'HS-RS-1169',d:'T605 50X60X10X11',g:'HS-ROD SEAL',br:'HL:HALLITE',s:412004,q:10521,gp:30.2,tx:301},
+  {r:22,code:'OS-VI-8184L',d:'OIL SEAL VITON 56X78X10 TC',g:'OS-OIL SEAL VITON',br:'GD:LOCAL',s:409500,q:450,gp:24.5,tx:4},
+  {r:23,code:'HS-WR-0052',d:'T506 BEARING STRIP 9.7X2.5',g:'HS-WEAR RING/BEARING',br:'HL:HALLITE',s:402298,q:1654,gp:62.3,tx:153},
+  {r:24,code:'OR-CN-06.00-N70-SC',d:'O-RING CORD NBR 06.00 N70 (SC)',g:'OR-CORD NBR',br:'GP:GAPI',s:391877,q:9329,gp:61.8,tx:392},
+  {r:25,code:'OR-CN-08.00-N70',d:'O-RING CORD NBR 08.00 N70 (100MTR)',g:'OR-CORD NBR',br:'GP:GAPI',s:387750,q:6603,gp:62.1,tx:23},
+  {r:26,code:'HS-DA-0448',d:'T780 DAS Piston seal 100X75X22.4',g:'HS-DOUBLE ACTING',br:'HL:HALLITE',s:379616,q:2729,gp:47.3,tx:348},
+  {r:27,code:'OR-CV-12.00-V75-SC',d:'O-RING CORD VITON 12.00 V75 (SC)',g:'OR-CORD VITON',br:'GP:GAPI',s:377053,q:284,gp:62.4,tx:20},
+  {r:28,code:'OR-NB-039.00-04.00N7',d:'O-RING NBR 039.00X04.00 N70',g:'OR-NBR',br:'GP:GAPI',s:373022,q:128400,gp:63.4,tx:64},
+  {r:29,code:'OR-CN-08.00-N70-SC',d:'O-RING CORD NBR 08.00 N70 (SC)',g:'OR-CORD NBR',br:'GP:GAPI',s:353085,q:6615,gp:64.6,tx:287},
+  {r:30,code:'OS-VN-690.00M',d:'V-RING NBR RME 690 : 670X712X32.5',g:'OS-V-RING NBR',br:'NO BRAND',s:346560,q:62,gp:58.4,tx:4},
+  {r:31,code:'OR-NB-619.50-08.00L',d:'O-RING NBR 619.50X08.00 N70',g:'OR-NBR',br:'GD:LOCAL',s:324000,q:144,gp:20.0,tx:4},
+  {r:32,code:'OR-CN-10.00-N70-SC',d:'O-RING CORD NBR 10.00 N70 (SC)',g:'OR-CORD NBR',br:'GP:GAPI',s:301341,q:2523,gp:65.2,tx:167},
+  {r:33,code:'OR-KT-TYPE A VITON',d:'O-RING KIT TYPE A VITON',g:'OR-KIT',br:'ECOSEAL',s:300136,q:81,gp:78.1,tx:67},
+  {r:34,code:'OR-KA-196.22-05.33-6',d:'O-RING KALREZ 6375 196.22X05.33 (AS368)',g:'OR-KALREZ',br:'DK:DUPONT',s:297927,q:11,gp:75.4,tx:2},
+  {r:35,code:'OR-CV-05.00-V75-SC',d:'O-RING CORD VITON 05.00 V75 (SC)',g:'OR-CORD VITON',br:'GP:GAPI',s:296931,q:1029,gp:50.4,tx:114},
+  {r:36,code:'HS-DA-0487',d:'T780 DAS Piston seal 50X34X18.4',g:'HS-DOUBLE ACTING',br:'HL:HALLITE',s:286403,q:3978,gp:46.4,tx:340},
+  {r:37,code:'OR-CV-04.00-V75-SC',d:'O-RING CORD VITON 04.00 V75 (SC)',g:'OR-CORD VITON',br:'GP:GAPI',s:283689,q:1537,gp:44.8,tx:117},
+  {r:38,code:'OS-VI-2088',d:'OIL SEAL VITON 180X210X15 TC',g:'OS-OIL SEAL VITON',br:'SG:SOG',s:278768,q:211,gp:47.7,tx:56},
+  {r:39,code:'OR-CN-05.00-N70-SC',d:'O-RING CORD NBR 05.00 N70 (SC)',g:'OR-CORD NBR',br:'GP:GAPI',s:275315,q:9155,gp:65.5,tx:412},
+  {r:40,code:'HS-OT-3732L',d:'SEAL VACUUM SILICONE 006X031X18',g:'HS-OTHER',br:'GD:LOCAL',s:270000,q:1500,gp:22.2,tx:14},
+  {r:41,code:'HS-OT-3683L',d:'UNITON EPDM 213X326/260X13/17 60SH',g:'HS-OTHER',br:'GD:LOCAL',s:265500,q:59,gp:33.3,tx:11},
+  {r:42,code:'HS-DA-0495',d:'T780 DAS Piston seal 63X47X18.4',g:'HS-DOUBLE ACTING',br:'HL:HALLITE',s:264360,q:3486,gp:45.1,tx:305},
+  {r:43,code:'OR-VI-327.00-08.00L',d:'O-RING VITON 327.00X08.00 V75',g:'OR-VITON',br:'GD:LOCAL',s:264000,q:132,gp:25.0,tx:5},
+  {r:44,code:'OR-CV-05.70-V75-SC',d:'O-RING CORD VITON 05.70 V75 (SC)',g:'OR-CORD VITON',br:'GP:GAPI',s:263622,q:742,gp:60.0,tx:52},
+  {r:45,code:'OR-CV-08.00-V75',d:'O-RING CORD VITON 08.00 V75 (100MTR)',g:'OR-CORD VITON',br:'GP:GAPI',s:259600,q:600,gp:14.6,tx:3},
+  {r:46,code:'OR-CV-03.00-V75-SC',d:'O-RING CORD VITON 03.00 V75 (SC)',g:'OR-CORD VITON',br:'GP:GAPI',s:258352,q:1708,gp:57.6,tx:162},
+  {r:47,code:'OR-VI-1393.00-6.35V7',d:'O-RING VITON 1393.00X06.35 V75 (VULC)',g:'OR-VITON',br:'NE:NORTHERN',s:256000,q:16,gp:77.6,tx:5},
+  {r:48,code:'OR-KA-110.72-03.53-6',d:'O-RING KALREZ 6375 110.72X03.53 (AS245)',g:'OR-KALREZ',br:'DK:DUPONT',s:250045,q:44,gp:74.4,tx:9},
+  {r:49,code:'HS-OT-0095L',d:'SEAL EPDM 028.30X057.00X05.00',g:'HS-OTHER',br:'GD:LOCAL',s:248000,q:3100,gp:25.0,tx:5},
+  {r:50,code:'HS-OT-3737L',d:'RUBBER RING VITON 420X444X09',g:'HS-OTHER',br:'GD:LOCAL',s:245520,q:44,gp:28.3,tx:1},
+  {r:51,code:'OR-CN-04.00-N70-SC',d:'O-RING CORD NBR 04.00 N70 (SC)',g:'OR-CORD NBR',br:'GP:GAPI',s:243755,q:11215,gp:62.3,tx:384},
+  {r:52,code:'OR-VI-754.00-06.99L',d:'O-RING VITON 754.00X06.99 V75',g:'OR-VITON',br:'GD:LOCAL',s:239200,q:10,gp:56.1,tx:5},
+  {r:53,code:'OR-NB-006.00-02.00N7',d:'O-RING NBR 006.00X02.00 N70',g:'OR-NBR',br:'GP:GAPI',s:236379,q:1223616,gp:33.7,tx:272},
+  {r:54,code:'OR-VI-107.32-05.33V7',d:'O-RING VITON 107.32X05.33 V75 (AS347)',g:'OR-VITON',br:'GP:GAPI',s:236040,q:1774,gp:67.8,tx:68},
+  {r:55,code:'OR-CN-04.00-N70',d:'O-RING CORD NBR 04.00 N70 (300MTR)',g:'OR-CORD NBR',br:'GP:GAPI',s:233400,q:10903,gp:65.3,tx:20},
+  {r:56,code:'OS-NB-7456',d:'OIL SEAL NBR 280X324X20 TC',g:'OS-OIL SEAL NBR',br:'SG:SOG',s:230400,q:72,gp:87.3,tx:1},
+  {r:57,code:'OR-CV-08.40-V75-SC',d:'O-RING CORD VITON 08.40 V75 (SC)',g:'OR-CORD VITON',br:'GP:GAPI',s:225570,q:337,gp:40.6,tx:24},
+  {r:58,code:'OR-KT-TYPE B VITON',d:'O-RING KIT TYPE B VITON',g:'OR-KIT',br:'ECOSEAL',s:225404,q:34,gp:66.2,tx:30},
+  {r:59,code:'OR-KT-TYPE C VITON',d:'O-RING KIT TYPE C VITON',g:'OR-KIT',br:'ECOSEAL',s:223619,q:63,gp:68.6,tx:41},
+  {r:60,code:'OS-VI-2181',d:'OIL SEAL VITON 440X480X20 TC',g:'OS-OIL SEAL VITON',br:'SG:SOG',s:218547,q:25,gp:31.9,tx:3},
+  {r:61,code:'OS-VI-2105',d:'OIL SEAL VITON 220X250X15 TC',g:'OS-OIL SEAL VITON',br:'SG:SOG',s:217809,q:104,gp:49.4,tx:31},
+  {r:62,code:'OS-VI-2072',d:'OIL SEAL VITON 160X190X15 TC',g:'OS-OIL SEAL VITON',br:'SG:SOG',s:216227,q:209,gp:52.0,tx:67},
+  {r:63,code:'OS-VI-2168',d:'OIL SEAL VITON 280X320X20 TC',g:'OS-OIL SEAL VITON',br:'SG:SOG',s:215380,q:44,gp:48.2,tx:16},
+  {r:64,code:'HS-WR-0047',d:'T506 BEARING STRIP 20X2.5',g:'HS-WEAR RING/BEARING',br:'HL:HALLITE',s:214331,q:471,gp:63.5,tx:80},
+  {r:65,code:'OR-CV-16.00-V75-SC',d:'O-RING CORD VITON 16.00 V75 (SC)',g:'OR-CORD VITON',br:'GP:GAPI',s:214080,q:83,gp:55.3,tx:7},
+  {r:66,code:'OR-KT-TYPE D VITON',d:'O-RING KIT TYPE D VITON',g:'OR-KIT',br:'ECOSEAL',s:213519,q:32,gp:59.6,tx:21},
+  {r:67,code:'HS-WR-0129',d:'SLYDRING 20.00X19.50X2.5 (L25 MTR)',g:'HS-WEAR RING/BEARING',br:'GP:GAPI',s:210470,q:691,gp:67.0,tx:123},
+  {r:68,code:'OS-VI-2112',d:'OIL SEAL VITON 240X270X15 TC',g:'OS-OIL SEAL VITON',br:'SG:SOG',s:207590,q:83,gp:49.1,tx:32},
+  {r:69,code:'OS-VI-0690',d:'OIL SEAL VITON 300X340X20 TA',g:'OS-OIL SEAL VITON',br:'SG:SOG',s:206720,q:38,gp:45.6,tx:10},
+  {r:70,code:'OS-VN-565.00M',d:'V-RING NBR RME 565 : 550X592X32.5',g:'OS-V-RING NBR',br:'NO BRAND',s:206100,q:46,gp:66.1,tx:6},
+  {r:71,code:'OS-VI-1618',d:'OIL SEAL VITON 70X90X10 TC',g:'OS-OIL SEAL VITON',br:'SG:SOG',s:204837,q:858,gp:53.0,tx:132},
+  {r:72,code:'OR-NB-019.60-02.40N7',d:'O-RING NBR 019.60X02.40 N70',g:'OR-NBR',br:'GP:GAPI',s:204828,q:322635,gp:46.7,tx:31},
+  {r:73,code:'OR-KA-059.92-03.53-4',d:'O-RING KALREZ 4079 059.92X03.53 (AS229)',g:'OR-KALREZ',br:'DK:DUPONT',s:204585,q:26,gp:87.9,tx:13},
+  {r:74,code:'HS-DA-0500',d:'T780 DAS Piston seal 65X50X18.4',g:'HS-DOUBLE ACTING',br:'HL:HALLITE',s:204475,q:1928,gp:51.9,tx:178},
+  {r:75,code:'HS-RS-1147',d:'T605 40X50X10X11',g:'HS-ROD SEAL',br:'HL:HALLITE',s:202492,q:3525,gp:47.4,tx:127},
+  {r:76,code:'OR-KA-010.82-01.78-4',d:'O-RING KALREZ 4079 010.82X01.78 (AS013)',g:'OR-KALREZ',br:'DK:DUPONT',s:202397,q:800,gp:47.1,tx:2},
+  {r:77,code:'OS-VI-2080',d:'OIL SEAL VITON 170X200X15 TC',g:'OS-OIL SEAL VITON',br:'SG:SOG',s:202129,q:185,gp:46.8,tx:47},
+  {r:78,code:'OR-CN-03.53-N70-SC',d:'O-RING CORD NBR 03.53 N70 (SC)',g:'OR-CORD NBR',br:'GP:GAPI',s:201992,q:6793,gp:79.9,tx:284},
+  {r:79,code:'OR-NB-032.92-03.53N7',d:'O-RING NBR 032.92X03.53 N70 (AS219)',g:'OR-NBR',br:'GP:GAPI',s:185156,q:48608,gp:83.3,tx:172},
+  {r:80,code:'OR-KA-247.32-02.62-6',d:'O-RING KALREZ 6375 247.32X02.62 (AS178)',g:'OR-KALREZ',br:'DK:DUPONT',s:188682,q:11,gp:76.0,tx:3},
+  {r:81,code:'OR-KA-228.27-02.62-6',d:'O-RING KALREZ 6375 228.27X02.62 (AS175)',g:'OR-KALREZ',br:'DK:DUPONT',s:185614,q:12,gp:76.3,tx:2},
+  {r:82,code:'OR-KA-069.44-03.53-4',d:'O-RING KALREZ 4079 069.44X03.53 (AS232)',g:'OR-KALREZ',br:'DK:DUPONT',s:183640,q:25,gp:84.8,tx:20},
+  {r:83,code:'HS-RS-1172',d:'T605 50X60X7.3X8',g:'HS-ROD SEAL',br:'HL:HALLITE',s:173103,q:8521,gp:52.0,tx:198},
+  {r:84,code:'OS-NB-7218',d:'OIL SEAL NBR 170X200X15 TC',g:'OS-OIL SEAL NBR',br:'SG:SOG',s:173782,q:312,gp:49.7,tx:124},
+  {r:85,code:'OS-VI-2022',d:'OIL SEAL VITON 150X180X14 TC',g:'OS-OIL SEAL VITON',br:'SG:SOG',s:163792,q:312,gp:39.1,tx:44},
+  {r:86,code:'OR-NB-024.40-03.10N7',d:'O-RING NBR 024.40X03.10 N70',g:'OR-NBR',br:'GP:GAPI',s:154128,q:167000,gp:48.5,tx:167},
+  {r:87,code:'HS-RS-1163',d:'T605 45X55X7.3X8',g:'HS-ROD SEAL',br:'HL:HALLITE',s:140020,q:4521,gp:54.1,tx:216},
+  {r:88,code:'OS-VI-1640',d:'OIL SEAL VITON 80X100X10 TC',g:'OS-OIL SEAL VITON',br:'SG:SOG',s:154993,q:654,gp:51.2,tx:123},
+  {r:89,code:'OR-NB-022.50-01.50N7',d:'O-RING NBR 022.50X01.50 N70',g:'OR-NBR',br:'GP:GAPI',s:131975,q:35000,gp:72.4,tx:35},
+  {r:90,code:'OR-VI-094.84-03.53V7',d:'O-RING VITON 094.84X03.53 V75 (AS240)',g:'OR-VITON',br:'GP:GAPI',s:164620,q:2400,gp:92.6,tx:72},
+  {r:91,code:'OR-VI-169.30-05.70V7',d:'O-RING VITON 169.30X05.70 V75 (G-170)',g:'OR-VITON',br:'GP:GAPI',s:160814,q:1800,gp:90.4,tx:60},
+  {r:92,code:'HS-RP-1878',d:'T601 40X50X6X7',g:'HS-ROD SEAL/PISTON',br:'HL:HALLITE',s:177199,q:8300,gp:56.4,tx:314},
+  {r:93,code:'HS-RP-1855',d:'T601 30X40X6X7',g:'HS-ROD SEAL/PISTON',br:'HL:HALLITE',s:159176,q:6500,gp:72.4,tx:184},
+  {r:94,code:'OR-NB-139.07-05.33N7',d:'O-RING NBR 139.07X05.33 N70 (AS357)',g:'OR-NBR',br:'GP:GAPI',s:117301,q:3200,gp:87.4,tx:26},
+  {r:95,code:'HS-WP-1356',d:'T38 DUST WIPER 50X58X5X8',g:'HS-WIPER SEAL',br:'HL:HALLITE',s:175717,q:4200,gp:17.6,tx:109},
+  {r:96,code:'OS-NB-9211',d:'OIL SEAL NBR 45X62X7/7.5 TCV/BABSL',g:'OS-OIL SEAL NBR',br:'SG:SOG',s:162462,q:580,gp:48.1,tx:8},
+  {r:97,code:'OS-VI-2170',d:'OIL SEAL VITON 300X340X20 TC',g:'OS-OIL SEAL VITON',br:'SG:SOG',s:199862,q:35,gp:44.2,tx:12},
+  {r:98,code:'OR-NB-073.00-03.00N7',d:'O-RING NBR 073.00X03.00 N70',g:'OR-NBR',br:'GP:GAPI',s:97655,q:12500,gp:70.9,tx:132},
+  {r:99,code:'HS-DA-0553',d:'T54 PISTON SEAL 160X139X8.1',g:'HS-DOUBLE ACTING',br:'HL:HALLITE',s:157754,q:820,gp:84.3,tx:38},
+  {r:100,code:'OR-NB-044.40-03.10N7',d:'O-RING NBR 044.40X03.10 N70',g:'OR-NBR',br:'GP:GAPI',s:81285,q:9800,gp:91.8,tx:160},
+];
+
+const stockItems=[
+  {code:'HS-DA-0506',d:'T780 DAS Piston seal 80X60X22.4',tx:648,q:9713,s:0.94,gp:43.4,lv:'HIGH',br:'HL:HALLITE',g:'HS-DOUBLE ACTING',note:'Transaction สูงสุด 648 ครั้ง ต้องมี Stock สำรองไม่น้อยกว่า 3 เดือน'},
+  {code:'OR-NB-008.00-02.00N7',d:'O-RING NBR 008.00X02.00 N70',tx:522,q:60864,s:0.05,gp:75.3,lv:'HIGH',br:'GP:GAPI',g:'OR-NBR',note:'522 tx GP 75.3% ต้องมี Stock มาก'},
+  {code:'OR-NB-012.00-02.00N7',d:'O-RING NBR 012.00X02.00 N70',tx:522,q:71664,s:0.08,gp:84.9,lv:'HIGH',br:'GP:GAPI',g:'OR-NBR',note:'522 tx GP 84.9% Margin ดีมาก'},
+  {code:'OS-NB-4269',d:'OIL SEAL NBR 30X47X7 TC',tx:454,q:3859,s:0.08,gp:56.5,lv:'MED',br:'GP:GAPI',g:'OS-OIL SEAL NBR',note:'454 tx ขายสม่ำเสมอ'},
+  {code:'OR-NB-011.00-02.50N7',d:'O-RING NBR 011.00X02.50 N70',tx:453,q:39394,s:0.03,gp:69.8,lv:'HIGH',br:'GP:GAPI',g:'OR-NBR',note:'453 tx GP 69.8%'},
+  {code:'OR-NB-015.00-02.50N7',d:'O-RING NBR 015.00X02.50 N70',tx:436,q:31180,s:0.04,gp:76.4,lv:'HIGH',br:'GP:GAPI',g:'OR-NBR',note:'436 tx GP 76.4%'},
+  {code:'OR-CN-05.00-N70-SC',d:'O-RING CORD NBR 05.00 N70 (SC)',tx:412,q:9155,s:0.28,gp:65.5,lv:'HIGH',br:'GP:GAPI',g:'OR-CORD NBR',note:'412 tx GP 65.5%'},
+  {code:'OR-CN-06.00-N70-SC',d:'O-RING CORD NBR 06.00 N70 (SC)',tx:392,q:9329,s:0.39,gp:61.8,lv:'HIGH',br:'GP:GAPI',g:'OR-CORD NBR',note:'392 tx'},
+  {code:'OR-CN-03.00-N70-SC',d:'O-RING CORD NBR 03.00 N70 (SC)',tx:390,q:9976,s:0.17,gp:62.7,lv:'MED',br:'GP:GAPI',g:'OR-CORD NBR',note:'390 tx'},
+  {code:'OR-CN-04.00-N70-SC',d:'O-RING CORD NBR 04.00 N70 (SC)',tx:384,q:11215,s:0.24,gp:62.3,lv:'MED',br:'GP:GAPI',g:'OR-CORD NBR',note:'384 tx'},
+  {code:'OR-NB-010.00-02.00N7',d:'O-RING NBR 010.00X02.00 N70',tx:381,q:53727,s:0.05,gp:74.1,lv:'HIGH',br:'GP:GAPI',g:'OR-NBR',note:'381 tx GP 74.1%'},
+  {code:'HS-WR-0101',d:'SLYDRING 09.70X09.50X2.5 (L25 MTR)',tx:376,q:302479,s:0.46,gp:72.4,lv:'MED',br:'GP:GAPI',g:'HS-WEAR RING',note:'376 tx ปริมาณสูง 302K ชิ้น'},
+  {code:'OR-NB-020.00-02.50N7',d:'O-RING NBR 020.00X02.50 N70',tx:374,q:36577,s:0.05,gp:74.3,lv:'HIGH',br:'GP:GAPI',g:'OR-NBR',note:'374 tx GP 74.3%'},
+  {code:'OS-NB-4184',d:'OIL SEAL NBR 25X40X7 TC',tx:366,q:2418,s:0.04,gp:57.8,lv:'MED',br:'GP:GAPI',g:'OS-OIL SEAL NBR',note:'366 tx'},
+];
+
+// ---- GROUP DATA with TYPE TABS ----
+const GRP=[
+{name:'OR-VITON',sale:36.5,gp:70.0,tx:61063,pri:'⭐⭐⭐',reason:'ยอดขายสูงสุด ฿36.5M GP 70% — Bundle + Volume Discount',strat:'Bundle หลายขนาด, Catalog ครบ Size, Volume Price ≥100 ชิ้น ลด 5%',
+ tabs:[
+  {label:'Material NBR (V75/V70)',items:[
+    {code:'OR-VI-107.32-05.33V7',d:'O-RING VITON 107.32X05.33 V75 (AS347)',s:236040,gp:67.8,tx:68},
+    {code:'OR-VI-034.52-03.53V7',d:'O-RING VITON 034.52X03.53 V75 (AS220)',s:138376,gp:81.9,tx:144},
+    {code:'OR-VI-229.30-05.70V7',d:'O-RING VITON 229.30X05.70 V75 (G-230)',s:125555,gp:74.2,tx:42},
+    {code:'OR-VI-035.00-03.50V7',d:'O-RING VITON 035.00X03.50 V75',s:104940,gp:74.1,tx:150},
+    {code:'OR-VI-025.00-03.50V7',d:'O-RING VITON 025.00X03.50 V75',s:99528,gp:79.9,tx:159},
+    {code:'OR-VI-094.84-03.53V7',d:'O-RING VITON 094.84X03.53 V75 (AS240)',s:164620,gp:92.6,tx:72},
+    {code:'OR-VI-169.30-05.70V7',d:'O-RING VITON 169.30X05.70 V75 (G-170)',s:160814,gp:90.4,tx:60},
+    {code:'OR-VI-240.67-06.99V7',d:'O-RING VITON 240.67X06.99 V75 (AS448)',s:108643,gp:82.1,tx:30},
+  ]},
+  {label:'Large Size (Custom)',items:[
+    {code:'OR-VI-146.00-07.60L7',d:'O-RING VITON 146.00X07.60 V70',s:505500,gp:26.4,tx:8},
+    {code:'OR-VI-327.00-08.00L',d:'O-RING VITON 327.00X08.00 V75',s:264000,gp:25.0,tx:5},
+    {code:'OR-VI-754.00-06.99L',d:'O-RING VITON 754.00X06.99 V75',s:239200,gp:56.1,tx:5},
+    {code:'OR-VI-1393.00-6.35V7',d:'O-RING VITON 1393.00X06.35 V75 (VULC)',s:256000,gp:77.6,tx:5},
+    {code:'OR-VI-665.00-16.00L',d:'O-RING VITON 665.00X16.00 V75',s:120000,gp:62.5,tx:2},
+  ]},
+ ]},
+{name:'OR-NBR',sale:27.1,gp:65.8,tx:131610,pri:'⭐⭐⭐',reason:'Transaction สูงสุด 131,610 ครั้ง GP 65.8% — Loyalty Program',strat:'Loyalty Points ซื้อครบ 10 ครั้งได้ส่วนลด 3%, Auto-Order, Pack ประหยัด',
+ tabs:[
+  {label:'Material N70 (Standard)',items:[
+    {code:'OR-NB-051.00-03.00N7',d:'O-RING NBR 051.00X03.00 N70',s:1074501,gp:51.6,tx:75},
+    {code:'OR-NB-039.00-04.00N7',d:'O-RING NBR 039.00X04.00 N70',s:373022,gp:63.4,tx:64},
+    {code:'OR-NB-032.92-03.53N7',d:'O-RING NBR 032.92X03.53 N70 (AS219)',s:185156,gp:83.3,tx:172},
+    {code:'OR-NB-024.40-03.10N7',d:'O-RING NBR 024.40X03.10 N70',s:154128,gp:48.5,tx:167},
+    {code:'OR-NB-012.00-02.00N7',d:'O-RING NBR 012.00X02.00 N70',s:84768,gp:84.9,tx:522},
+    {code:'OR-NB-008.00-02.00N7',d:'O-RING NBR 008.00X02.00 N70',s:52309,gp:75.3,tx:522},
+    {code:'OR-NB-006.00-02.00N7',d:'O-RING NBR 006.00X02.00 N70',s:236379,gp:33.7,tx:272},
+    {code:'OR-NB-073.00-03.00N7',d:'O-RING NBR 073.00X03.00 N70',s:97655,gp:70.9,tx:132},
+    {code:'OR-NB-044.40-03.10N7',d:'O-RING NBR 044.40X03.10 N70',s:81285,gp:91.8,tx:160},
+    {code:'OR-NB-028.00-03.50N7',d:'O-RING NBR 028.00X03.50 N70',s:75893,gp:74.1,tx:227},
+    {code:'OR-NB-022.50-01.50N7',d:'O-RING NBR 022.50X01.50 N70',s:131975,gp:72.4,tx:35},
+    {code:'OR-NB-139.07-05.33N7',d:'O-RING NBR 139.07X05.33 N70 (AS357)',s:117301,gp:87.4,tx:26},
+  ]},
+  {label:'Large Size (Custom)',items:[
+    {code:'OR-NB-619.50-08.00L',d:'O-RING NBR 619.50X08.00 N70',s:324000,gp:20.0,tx:4},
+    {code:'OR-NB-220.00-06.00L5',d:'O-RING NBR 220.00X06.00 N50',s:200000,gp:40.0,tx:3},
+    {code:'OR-NB-019.60-02.40N7',d:'O-RING NBR 019.60X02.40 N70',s:204828,gp:46.7,tx:31},
+  ]},
+ ]},
+{name:'OS-OIL SEAL VITON',sale:22.8,gp:50.3,tx:16334,pri:'⭐⭐⭐',reason:'฿22.8M Cross-sell กับ OR-VITON Food/Chemical Industry',strat:'แพ็กคู่กับ O-Ring VITON, Spec Sheet, Case Study อุตสาหกรรม',
+ tabs:[
+  {label:'Brand SOG — Type TC',items:[
+    {code:'OS-VI-2088',d:'OIL SEAL VITON 180X210X15 TC',s:278768,gp:47.7,tx:56},
+    {code:'OS-VI-2105',d:'OIL SEAL VITON 220X250X15 TC',s:217809,gp:49.4,tx:31},
+    {code:'OS-VI-2072',d:'OIL SEAL VITON 160X190X15 TC',s:216227,gp:52.0,tx:67},
+    {code:'OS-VI-2168',d:'OIL SEAL VITON 280X320X20 TC',s:215380,gp:48.2,tx:16},
+    {code:'OS-VI-2112',d:'OIL SEAL VITON 240X270X15 TC',s:207590,gp:49.1,tx:32},
+    {code:'OS-VI-2080',d:'OIL SEAL VITON 170X200X15 TC',s:202129,gp:46.8,tx:47},
+    {code:'OS-VI-2170',d:'OIL SEAL VITON 300X340X20 TC',s:199862,gp:44.2,tx:12},
+    {code:'OS-VI-2014',d:'OIL SEAL VITON 130X160X14 TC',s:198179,gp:44.1,tx:43},
+    {code:'OS-VI-1618',d:'OIL SEAL VITON 70X90X10 TC',s:204837,gp:53.0,tx:132},
+    {code:'OS-VI-1264',d:'OIL SEAL VITON 50X65X8 TC',s:182713,gp:61.2,tx:141},
+    {code:'OS-VI-1842',d:'OIL SEAL VITON 120X150X12 TC',s:154708,gp:53.7,tx:80},
+    {code:'OS-VI-1640',d:'OIL SEAL VITON 80X100X10 TC',s:154993,gp:51.2,tx:123},
+  ]},
+  {label:'Brand SOG — Type TA/SA',items:[
+    {code:'OS-VI-0690',d:'OIL SEAL VITON 300X340X20 TA',s:206720,gp:45.6,tx:10},
+    {code:'OS-VI-0694',d:'OIL SEAL VITON 340X380X20 TA',s:179520,gp:40.8,tx:5},
+    {code:'OS-VI-0697',d:'OIL SEAL VITON 380X420X20 TA',s:156440,gp:49.7,tx:4},
+    {code:'OS-VI-2526',d:'OIL SEAL VITON 500X540X20 SA',s:484000,gp:45.1,tx:9},
+    {code:'OS-VI-2181',d:'OIL SEAL VITON 440X480X20 TC',s:218547,gp:31.9,tx:3},
+  ]},
+ ]},
+{name:'OS-OIL SEAL NBR',sale:18.1,gp:52.1,tx:51289,pri:'⭐⭐⭐',reason:'51,289 tx ฿18.1M — Bulk Pack + Fast Delivery',strat:'Bulk Pack 10/20/50 ชิ้น, Fast Shipping 24h, Auto-Replenishment',
+ tabs:[
+  {label:'Brand SOG — Type TC',items:[
+    {code:'OS-NB-7218',d:'OIL SEAL NBR 170X200X15 TC',s:173782,gp:49.7,tx:124},
+    {code:'OS-NB-7228',d:'OIL SEAL NBR 180X210X15 TC',s:137571,gp:49.2,tx:71},
+    {code:'OS-NB-7249',d:'OIL SEAL NBR 200X230X15 TC',s:130413,gp:50.2,tx:82},
+    {code:'OS-NB-7241',d:'OIL SEAL NBR 190X220X15 TC',s:128910,gp:46.2,tx:73},
+    {code:'OS-NB-7460',d:'OIL SEAL NBR 320X360X20 TC',s:125599,gp:53.5,tx:17},
+    {code:'OS-NB-7053',d:'OIL SEAL NBR 130X160X14 TC',s:112684,gp:46.9,tx:130},
+    {code:'OS-NB-7070',d:'OIL SEAL NBR 150X180X14 TC',s:106784,gp:46.7,tx:107},
+    {code:'OS-NB-5997',d:'OIL SEAL NBR 80X100X10 TC',s:86354,gp:51.4,tx:275},
+    {code:'OS-NB-7456',d:'OIL SEAL NBR 280X324X20 TC',s:230400,gp:87.3,tx:1},
+    {code:'OS-NB-4269',d:'OIL SEAL NBR 30X47X7 TC',s:79215,gp:56.5,tx:454},
+  ]},
+  {label:'Brand SOG — Type TA/SC/BABSL',items:[
+    {code:'OS-NB-9211',d:'OIL SEAL NBR 45X62X7/7.5 TCV/BABSL',s:162462,gp:48.1,tx:8},
+    {code:'OS-NB-8938',d:'OIL SEAL NBR 270X310X16 TA',s:78884,gp:40.4,tx:5},
+    {code:'OS-NB-5886',d:'OIL SEAL NBR 50X80X10 TC',s:118428,gp:56.0,tx:182},
+    {code:'OS-NB-5889',d:'OIL SEAL NBR 55X80X10 TC',s:101855,gp:84.1,tx:100},
+    {code:'OS-NB-5994',d:'OIL SEAL NBR 75X100X10 TC',s:78714,gp:56.0,tx:171},
+  ]},
+ ]},
+{name:'HS-DOUBLE ACTING',sale:10.8,gp:55.2,tx:8403,pri:'⭐⭐⭐',reason:'GP 55.2% T81 GP 77.7% Technical Selling',strat:'Demo Kit, Application Guide, ขาย Set กับ T38 Wiper',
+ tabs:[
+  {label:'Hallite T780 Series',items:[
+    {code:'HS-DA-0506',d:'T780 DAS Piston seal 80X60X22.4',s:941164,gp:43.4,tx:648},
+    {code:'HS-DA-0448',d:'T780 DAS Piston seal 100X75X22.4',s:379616,gp:47.3,tx:348},
+    {code:'HS-DA-0487',d:'T780 DAS Piston seal 50X34X18.4',s:286403,gp:46.4,tx:340},
+    {code:'HS-DA-0495',d:'T780 DAS Piston seal 63X47X18.4',s:264360,gp:45.1,tx:305},
+    {code:'HS-DA-0500',d:'T780 DAS Piston seal 65X50X18.4',s:204475,gp:51.9,tx:178},
+    {code:'HS-DA-0510',d:'T780 DAS Piston seal 90X70X22.4',s:181694,gp:54.9,tx:214},
+    {code:'HS-DA-0501',d:'T780 DAS Piston seal 70X50X22.4',s:180399,gp:49.9,tx:212},
+    {code:'HS-DA-0453',d:'T780 DAS Piston seal 110X85X22.4',s:180282,gp:51.2,tx:161},
+    {code:'HS-DA-0460',d:'T780 DAS Piston seal 140X115X25.4',s:167150,gp:44.8,tx:165},
+    {code:'HS-DA-0456',d:'T780 DAS Piston seal 125X100X25.4',s:129541,gp:44.8,tx:170},
+    {code:'HS-DA-0492',d:'T780 DAS Piston seal 60X44X18.4',s:119165,gp:45.6,tx:142},
+    {code:'HS-DA-0496',d:'T780 DAS Piston seal 63X47X19.4',s:100977,gp:47.1,tx:119},
+  ]},
+  {label:'Hallite T81/T54/T754',items:[
+    {code:'HS-DA-0531',d:'T81 80X60X22.4X6.35',s:1079051,gp:77.7,tx:26},
+    {code:'HS-DA-0527',d:'T81 63X47X18.4X6.35',s:546692,gp:47.4,tx:27},
+    {code:'HS-DA-0553',d:'T54 PISTON SEAL 160X139X8.1',s:157754,gp:84.3,tx:38},
+    {code:'HS-DA-6038',d:'T754 COMPACT 75X64X4.2',s:99447,gp:67.8,tx:25},
+    {code:'HS-DA-6060',d:'T58 DOUBLE ACTING 3.000X2.250',s:106942,gp:33.7,tx:9},
+  ]},
+  {label:'Kastas K17',items:[
+    {code:'HS-DA-0119',d:'K17 PISTON SEAL 200X179X8.1',s:93792,gp:71.1,tx:16},
+  ]},
+ ]},
+{name:'HS-WIPER SEAL',sale:8.0,gp:65.4,tx:12806,pri:'⭐⭐⭐',reason:'GP 65.4% T38 GP 96.7% เหมาะ Hero Product',strat:'T38 = Hero Product, Bundle กับ Rod Seal, Promo 2+1',
+ tabs:[
+  {label:'Hallite T38 Series',items:[
+    {code:'HS-WP-1296',d:'T38 DUST WIPER 120X132.2X7.2X12',s:999014,gp:96.7,tx:50},
+    {code:'HS-WP-1369',d:'T38 DUST WIPER 70X80X6.3X10',s:110227,gp:79.3,tx:56},
+    {code:'HS-WP-1374',d:'T38 DUST WIPER 80X90X6.3X10',s:69758,gp:78.8,tx:42},
+    {code:'HS-WP-1381',d:'T38 DUST WIPER 90X100X6.3X10',s:57376,gp:72.1,tx:42},
+    {code:'HS-WP-1364',d:'T38 DUST WIPER 63X73.6X5.3X7',s:61282,gp:95.0,tx:20},
+    {code:'HS-WP-1356',d:'T38 DUST WIPER 50X58X5X8',s:175717,gp:17.6,tx:109},
+  ]},
+  {label:'Hallite T839 Series',items:[
+    {code:'HS-WP-1440',d:'T839 DUST WIPER 130X143X7.8X11',s:105010,gp:93.6,tx:28},
+    {code:'HS-WP-1475',d:'T839 DUST WIPER 50X58X5.8X8',s:88089,gp:57.1,tx:191},
+    {code:'HS-WP-1467',d:'T839 DUST WIPER 35X43X5.8X8',s:85179,gp:66.9,tx:177},
+    {code:'HS-WP-1470',d:'T839 DUST WIPER 40X48X5.8X8',s:76614,gp:56.1,tx:134},
+    {code:'HS-WP-1460',d:'T839 DUST WIPER 30X38X5.8X8',s:67010,gp:70.4,tx:79},
+    {code:'HS-WP-1453',d:'T839 DUST WIPER 20X28X4.8X7',s:65785,gp:66.7,tx:61},
+    {code:'HS-WP-1457',d:'T839 DUST WIPER 25X33X4.8X7',s:60751,gp:65.6,tx:122},
+    {code:'HS-WP-1487',d:'T839 DUST WIPER 70X80X6.8X10',s:61642,gp:59.5,tx:98},
+  ]},
+  {label:'Hallite T862 / SOG DKB',items:[
+    {code:'HS-WP-1503',d:'T862 1.25X1.75X0.313',s:82174,gp:66.6,tx:29},
+    {code:'HS-WP-1561',d:'DKB 50X60X7/10 NBR (SOG)',s:85693,gp:97.7,tx:9},
+  ]},
+ ]},
+{name:'HS-ROD SEAL',sale:10.4,gp:54.9,tx:11606,pri:'⭐⭐',reason:'฿10.4M T605 Repeat Order สม่ำเสมอ',strat:'Repeat Order Discount, Auto Replenishment, Size Chart',
+ tabs:[
+  {label:'Hallite T605 Series',items:[
+    {code:'HS-RS-1073',d:'T605 20X28X5X5.7',s:679264,gp:38.7,tx:62},
+    {code:'HS-RS-1169',d:'T605 50X60X10X11',s:412004,gp:30.2,tx:301},
+    {code:'HS-RS-1147',d:'T605 40X50X10X11',s:202492,gp:47.4,tx:127},
+    {code:'HS-RS-1172',d:'T605 50X60X7.3X8',s:173103,gp:52.0,tx:198},
+    {code:'HS-RS-0965',d:'T605 100X115X11.8X13',s:149705,gp:68.6,tx:89},
+    {code:'HS-RS-1163',d:'T605 45X55X7.3X8',s:140020,gp:54.1,tx:216},
+    {code:'HS-RS-1171',d:'T605 50X60X6X7',s:114143,gp:61.5,tx:217},
+    {code:'HS-RS-1162',d:'T605 45X55X6X7',s:110940,gp:64.2,tx:183},
+    {code:'HS-RS-1129',d:'T605 35X45X10X11',s:109381,gp:62.8,tx:105},
+    {code:'HS-RS-1148',d:'T605 40X50X6X7',s:105150,gp:56.8,tx:164},
+    {code:'HS-RS-1088',d:'T605 25X33X5.7X6.3',s:100606,gp:66.2,tx:187},
+    {code:'HS-RS-1149',d:'T605 40X50X7.3X8',s:103784,gp:52.0,tx:177},
+  ]},
+  {label:'Hallite T16 Series',items:[
+    {code:'HS-RS-0955',d:'T16 ROD SEAL 90X105.5X6.3',s:101324,gp:64.4,tx:62},
+    {code:'HS-RS-0942',d:'T16 ROD SEAL 40X55.5X6.3',s:95246,gp:89.9,tx:35},
+    {code:'HS-RS-0945',d:'T16 ROD SEAL 50X65.5X6.3',s:86466,gp:86.0,tx:79},
+  ]},
+  {label:'Kastas K35',items:[
+    {code:'HS-RS-0077',d:'K35 ROD SEAL 50X65.1X6.3',s:87712,gp:83.4,tx:34},
+  ]},
+ ]},
+{name:'HS-ROD SEAL/PISTON',sale:13.3,gp:58.2,tx:21821,pri:'⭐⭐⭐',reason:'฿13.3M T601/K21 ขายต่อเนื่อง GP 58.2%',strat:'Catalog ครบ Size, Technical Drawing, Fast Delivery',
+ tabs:[
+  {label:'Hallite T601 Series',items:[
+    {code:'HS-RP-1878',d:'T601 40X50X6X7',s:177199,gp:56.4,tx:314},
+    {code:'HS-RP-1855',d:'T601 30X40X6X7',s:159176,gp:72.4,tx:184},
+    {code:'HS-RP-1805',d:'T601 180X200X12X13',s:148812,gp:56.8,tx:79},
+    {code:'HS-RP-1893',d:'T601 50X60X6X7',s:147971,gp:58.2,tx:212},
+    {code:'HS-RP-1891',d:'T601 50X60X10X11',s:138129,gp:59.6,tx:177},
+    {code:'HS-RP-1897',d:'T601 53X63X6X7',s:128063,gp:61.2,tx:199},
+    {code:'HS-RP-1919',d:'T601 70X80X6X7',s:116409,gp:53.7,tx:206},
+    {code:'HS-RP-1885',d:'T601 45X55X6X7',s:109136,gp:51.4,tx:145},
+    {code:'HS-RP-1864',d:'T601 35X45X6X7',s:104435,gp:56.9,tx:203},
+    {code:'HS-RP-1876',d:'T601 40X50X10X11',s:92945,gp:50.4,tx:111},
+    {code:'HS-RP-1906',d:'T601 60X70X6X7',s:89801,gp:61.1,tx:173},
+  ]},
+  {label:'Kastas K21 U-Ring',items:[
+    {code:'HS-RP-0747',d:'K21 U-RING 30X50X10 PU',s:103787,gp:69.4,tx:22},
+    {code:'HS-RP-0788',d:'K21 U-RING 330X360X20 PU',s:103011,gp:73.0,tx:7},
+    {code:'HS-RP-0756',d:'K21 U-RING 320X350X15 PU',s:94228,gp:64.0,tx:11},
+    {code:'HS-RP-0430',d:'K21 U-RING 180X200X12 NBR',s:75834,gp:72.1,tx:28},
+  ]},
+  {label:'Hallite T512',items:[
+    {code:'HS-RP-1715',d:'T512 3.5X4X0.375',s:87841,gp:46.7,tx:49},
+  ]},
+ ]},
+{name:'HS-WEAR RING/BEARING',sale:6.1,gp:58.5,tx:3714,pri:'⭐⭐',reason:'GP 58.5% SLYDRING OEM Partnership',strat:'OEM Partnership, Roll-to-Order Custom, Technical Support',
+ tabs:[
+  {label:'Hallite T506 Bearing Strip',items:[
+    {code:'HS-WR-0045',d:'T506 BEARING STRIP 15X2.5',s:643047,gp:64.4,tx:207},
+    {code:'HS-WR-0049',d:'T506 BEARING STRIP 25X2.5',s:612944,gp:60.1,tx:142},
+    {code:'HS-WR-0052',d:'T506 BEARING STRIP 9.7X2.5',s:402298,gp:62.3,tx:153},
+    {code:'HS-WR-0047',d:'T506 BEARING STRIP 20X2.5',s:214331,gp:63.5,tx:80},
+    {code:'HS-WR-0924',d:'T506 BEARING STRIP 30X3',s:119661,gp:71.9,tx:36},
+    {code:'HS-WR-0923',d:'T506 BEARING STRIP 25X3',s:105704,gp:70.3,tx:35},
+    {code:'HS-WR-0050',d:'T506 BEARING STRIP 5.6X2.5',s:102678,gp:57.0,tx:49},
+  ]},
+  {label:'GAPI SLYDRING',items:[
+    {code:'HS-WR-0082',d:'SLYDRING 15.00X14.80X2.5 (L25 MTR)',s:507442,gp:65.2,tx:279},
+    {code:'HS-WR-0101',d:'SLYDRING 09.70X09.50X2.5 (L25 MTR)',s:462897,gp:72.4,tx:376},
+    {code:'HS-WR-0129',d:'SLYDRING 20.00X19.50X2.5 (L25 MTR)',s:210470,gp:67.0,tx:123},
+    {code:'HS-WR-0089',d:'SLYDRING 25.00X24.50X2.5 (L25 MTR)',s:182566,gp:66.9,tx:90},
+    {code:'HS-WR-0100',d:'SLYDRING 09.70X09.50X2.0 (L30 MTR)',s:125692,gp:70.5,tx:89},
+    {code:'HS-WR-0116',d:'SLYDRING 05.70X05.50X2.5 (L25 MTR)',s:94257,gp:78.4,tx:119},
+  ]},
+ ]},
+{name:'OR-CORD VITON',sale:6.3,gp:49.7,tx:1197,pri:'⭐⭐',reason:'GP 49.7% Cord ขายเป็นเมตร Custom Cut Service',strat:'Custom Cut and Splice, Price/Meter ชัดเจน',
+ tabs:[
+  {label:'GAPI — SC (ตัดแล้ว)',items:[
+    {code:'OR-CV-08.00-V75-SC',d:'O-RING CORD VITON 08.00 V75 (SC)',s:1123941,gp:55.4,tx:120},
+    {code:'OR-CV-07.00-V75-SC',d:'O-RING CORD VITON 07.00 V75 (SC)',s:601362,gp:50.3,tx:87},
+    {code:'OR-CV-10.00-V75-SC',d:'O-RING CORD VITON 10.00 V75 (SC)',s:509259,gp:49.0,tx:52},
+    {code:'OR-CV-06.00-V75-SC',d:'O-RING CORD VITON 06.00 V75 (SC)',s:469827,gp:47.7,tx:115},
+    {code:'OR-CV-12.00-V75-SC',d:'O-RING CORD VITON 12.00 V75 (SC)',s:377053,gp:62.4,tx:20},
+    {code:'OR-CV-05.00-V75-SC',d:'O-RING CORD VITON 05.00 V75 (SC)',s:296931,gp:50.4,tx:114},
+    {code:'OR-CV-04.00-V75-SC',d:'O-RING CORD VITON 04.00 V75 (SC)',s:283689,gp:44.8,tx:117},
+    {code:'OR-CV-05.70-V75-SC',d:'O-RING CORD VITON 05.70 V75 (SC)',s:263622,gp:60.0,tx:52},
+    {code:'OR-CV-03.00-V75-SC',d:'O-RING CORD VITON 03.00 V75 (SC)',s:258352,gp:57.6,tx:162},
+    {code:'OR-CV-15.00-V75-SC',d:'O-RING CORD VITON 15.00 V75 (SC)',s:246500,gp:46.6,tx:10},
+    {code:'OR-CV-16.00-V75-SC',d:'O-RING CORD VITON 16.00 V75 (SC)',s:214080,gp:55.3,tx:7},
+    {code:'OR-CV-08.40-V75-SC',d:'O-RING CORD VITON 08.40 V75 (SC)',s:225570,gp:40.6,tx:24},
+    {code:'OR-CV-09.00-V75-SC',d:'O-RING CORD VITON 09.00 V75 (SC)',s:192424,gp:49.1,tx:19},
+    {code:'OR-CV-03.53-V75-SC',d:'O-RING CORD VITON 03.53 V75 (SC)',s:153054,gp:45.6,tx:89},
+  ]},
+  {label:'GAPI — Roll (100MTR)',items:[
+    {code:'OR-CV-08.00-V75',d:'O-RING CORD VITON 08.00 V75 (100MTR)',s:259600,gp:14.6,tx:3},
+    {code:'OR-CV-06.00-V75',d:'O-RING CORD VITON 06.00 V75 (100MTR)',s:153335,gp:42.1,tx:5},
+    {code:'OR-CV-07.00-V75',d:'O-RING CORD VITON 07.00 V75 (100MTR)',s:90000,gp:34.0,tx:2},
+  ]},
+ ]},
+{name:'OR-CORD NBR',sale:5.2,gp:61.6,tx:3826,pri:'⭐⭐',reason:'GP 61.6% Transaction สูง Bundle หลาย Size',strat:'Size Bundle Pack (3+5+6mm), Cut-to-Length Service',
+ tabs:[
+  {label:'GAPI — SC (ตัดแล้ว)',items:[
+    {code:'OR-CN-06.00-N70-SC',d:'O-RING CORD NBR 06.00 N70 (SC)',s:391877,gp:61.8,tx:392},
+    {code:'OR-CN-08.00-N70-SC',d:'O-RING CORD NBR 08.00 N70 (SC)',s:353085,gp:64.6,tx:287},
+    {code:'OR-CN-10.00-N70-SC',d:'O-RING CORD NBR 10.00 N70 (SC)',s:301341,gp:65.2,tx:167},
+    {code:'OR-CN-05.00-N70-SC',d:'O-RING CORD NBR 05.00 N70 (SC)',s:275315,gp:65.5,tx:412},
+    {code:'OR-CN-04.00-N70-SC',d:'O-RING CORD NBR 04.00 N70 (SC)',s:243755,gp:62.3,tx:384},
+    {code:'OR-CN-03.53-N70-SC',d:'O-RING CORD NBR 03.53 N70 (SC)',s:201992,gp:79.9,tx:284},
+    {code:'OR-CN-07.00-N70-SC',d:'O-RING CORD NBR 07.00 N70 (SC)',s:172356,gp:62.4,tx:195},
+    {code:'OR-CN-03.00-N70-SC',d:'O-RING CORD NBR 03.00 N70 (SC)',s:165499,gp:62.7,tx:390},
+    {code:'OR-CN-12.00-N70-SC',d:'O-RING CORD NBR 12.00 N70 (SC)',s:165006,gp:50.4,tx:61},
+    {code:'OR-CN-05.50-N70-SC',d:'O-RING CORD NBR 05.50 N70 (SC)',s:113875,gp:75.0,tx:71},
+    {code:'OR-CN-04.50-N70-SC',d:'O-RING CORD NBR 04.50 N70 (SC)',s:107668,gp:63.4,tx:87},
+  ]},
+  {label:'GAPI — Roll',items:[
+    {code:'OR-CN-08.00-N70',d:'O-RING CORD NBR 08.00 N70 (100MTR)',s:387750,gp:62.1,tx:23},
+    {code:'OR-CN-04.00-N70',d:'O-RING CORD NBR 04.00 N70 (300MTR)',s:233400,gp:65.3,tx:20},
+    {code:'OR-CN-10.00-N70',d:'O-RING CORD NBR 10.00 N70 (50MTR)',s:193686,gp:49.1,tx:25},
+    {code:'OR-CN-06.00-N70',d:'O-RING CORD NBR 06.00 N70 (100MTR)',s:174220,gp:60.1,tx:29},
+  ]},
+ ]},
+{name:'OR-KALREZ',sale:10.6,gp:74.7,tx:797,pri:'⭐⭐⭐',reason:'GP 74.7% Premium Line Semiconductor/Chemical',strat:'Technical Brochure, Premium Packaging, Direct to Engineers',
+ tabs:[
+  {label:'DuPont Kalrez 6375',items:[
+    {code:'OR-KA-196.22-05.33-6',d:'O-RING KALREZ 6375 196.22X05.33 (AS368)',s:297927,gp:75.4,tx:2},
+    {code:'OR-KA-110.72-03.53-6',d:'O-RING KALREZ 6375 110.72X03.53 (AS245)',s:250045,gp:74.4,tx:9},
+    {code:'OR-KA-183.52-05.33-6',d:'O-RING KALREZ 6375 183.52X05.33 (AS366)',s:197408,gp:76.8,tx:2},
+    {code:'OR-KA-247.32-02.62-6',d:'O-RING KALREZ 6375 247.32X02.62 (AS178)',s:188682,gp:76.0,tx:3},
+    {code:'OR-KA-228.27-02.62-6',d:'O-RING KALREZ 6375 228.27X02.62 (AS175)',s:185614,gp:76.3,tx:2},
+    {code:'OR-KA-132.94-03.53-6',d:'O-RING KALREZ 6375 132.94X03.53 (AS252)',s:164452,gp:73.6,tx:8},
+    {code:'OR-KA-088.49-03.53-6',d:'O-RING KALREZ 6375 088.49X03.53 (AS238)',s:128018,gp:77.3,tx:8},
+  ]},
+  {label:'DuPont Kalrez 4079',items:[
+    {code:'OR-KA-059.92-03.53-4',d:'O-RING KALREZ 4079 059.92X03.53 (AS229)',s:204585,gp:87.9,tx:13},
+    {code:'OR-KA-069.44-03.53-4',d:'O-RING KALREZ 4079 069.44X03.53 (AS232)',s:183640,gp:84.8,tx:20},
+    {code:'OR-KA-078.97-03.53-4',d:'O-RING KALREZ 4079 078.97X03.53 (AS235)',s:158931,gp:89.2,tx:11},
+    {code:'OR-KA-139.29-03.53-4',d:'O-RING KALREZ 4079 139.29X03.53 (AS254)',s:122900,gp:84.0,tx:4},
+  ]},
+ ]},
+{name:'OR-KIT',sale:1.6,gp:69.8,tx:572,pri:'⭐⭐',reason:'GP 69.8% Kit Set MRO / ช่างซ่อมบำรุง',strat:'Maintenance Kit Bundle, Branded Box, เพิ่ม Type ใหม่',
+ tabs:[
+  {label:'ECOSEAL VITON Kits',items:[
+    {code:'OR-KT-TYPE A VITON',d:'O-RING KIT TYPE A VITON',s:300136,gp:78.1,tx:67},
+    {code:'OR-KT-TYPE B VITON',d:'O-RING KIT TYPE B VITON',s:225404,gp:66.2,tx:30},
+    {code:'OR-KT-TYPE C VITON',d:'O-RING KIT TYPE C VITON',s:223619,gp:68.6,tx:41},
+    {code:'OR-KT-TYPE D VITON',d:'O-RING KIT TYPE D VITON',s:213519,gp:59.6,tx:21},
+    {code:'OR-KT-TYPE RII VITON',d:'O-RING KIT TYPE RII VITON',s:63534,gp:31.6,tx:9},
+    {code:'OR-KT-TYPE RI VITON',d:'O-RING KIT TYPE RI VITON',s:41970,gp:58.4,tx:8},
+  ]},
+  {label:'ECOSEAL NBR Kits',items:[
+    {code:'OR-KT-TYPE A NBR',d:'O-RING KIT TYPE A NBR',s:124310,gp:82.2,tx:106},
+    {code:'OR-KT-TYPE B NBR',d:'O-RING KIT TYPE B NBR',s:85265,gp:74.7,tx:43},
+    {code:'OR-KT-TYPE C NBR',d:'O-RING KIT TYPE C NBR',s:67988,gp:83.6,tx:68},
+    {code:'OR-KT-TYPE D NBR',d:'O-RING KIT TYPE D NBR',s:59353,gp:77.0,tx:28},
+    {code:'OR-KT-AS',d:'O-RING KIT STANDARD AS (Red box)',s:26814,gp:87.1,tx:10},
+    {code:'OR-KT-JIS',d:'O-RING KIT STANDARD JIS (Blue box)',s:25454,gp:87.1,tx:10},
+  ]},
+ ]},
+{name:'OR-FFKM',sale:0.8,gp:92.8,tx:7,pri:'⭐⭐⭐',reason:'GP 92.8% สูงสุด! Semiconductor/Pharma',strat:'Premium Positioning, Technical Datasheet, Direct Sales',
+ tabs:[
+  {label:'GPlast 330B',items:[
+    {code:'OR-GP-330B-64.00-11.00',d:'O-RING GPlast 330B 064.00X11.00',s:696000,gp:100.0,tx:1},
+    {code:'OR-GP-330B-179.30-05.70',d:'O-RING GPlast 330B 179.30X05.70',s:110000,gp:47.4,tx:2},
+  ]},
+ ]},
+{name:'OS-GAMMA SEAL',sale:0.8,gp:88.1,tx:1434,pri:'⭐⭐',reason:'GP 88.1% 1,434 tx Highlight ใน Catalog',strat:'Feature ใน Catalog, Cross-sell กับ Oil Seal',
+ tabs:[
+  {label:'SOG — RB Series',items:[
+    {code:'OS-GM-0027',d:'GAMMA SEAL RB 040X057X04.50',s:61752,gp:89.6,tx:122},
+    {code:'OS-GM-0028',d:'GAMMA SEAL RB 045X062X04.50',s:50285,gp:89.5,tx:99},
+    {code:'OS-GM-0024',d:'GAMMA SEAL RB 030X047X04.50',s:49498,gp:89.3,tx:137},
+    {code:'OS-GM-0042',d:'GAMMA SEAL RB 060X080X05.50',s:51648,gp:89.4,tx:72},
+    {code:'OS-GM-0033',d:'GAMMA SEAL RB 065X085X05.50',s:52369,gp:88.6,tx:75},
+    {code:'OS-GM-0045',d:'GAMMA SEAL RB 017X032X04.00',s:34308,gp:89.4,tx:97},
+    {code:'OS-GM-0030',d:'GAMMA SEAL RB 055X075X05.50',s:33708,gp:89.2,tx:40},
+    {code:'OS-GM-0034',d:'GAMMA SEAL RB 070X090X05.50',s:32658,gp:89.0,tx:39},
+    {code:'OS-GM-0026',d:'GAMMA SEAL RB 035X052X04.50',s:29781,gp:90.0,tx:72},
+    {code:'OS-GM-0029',d:'GAMMA SEAL RB 050X070X05.50',s:26394,gp:87.0,tx:93},
+    {code:'OS-GM-0020',d:'GAMMA SEAL RB 020X035X04.00',s:24337,gp:89.8,tx:82},
+    {code:'OS-GM-0022',d:'GAMMA SEAL RB 025X040X04.00',s:23400,gp:89.2,tx:73},
+  ]},
+  {label:'SOG — 9RB Series',items:[
+    {code:'OS-GM-0013',d:'GAMMA SEAL 9RB 080X102X05.50',s:54600,gp:89.2,tx:52},
+    {code:'OS-GM-0008',d:'GAMMA SEAL 9RB 050X072X05.50',s:18373,gp:87.0,tx:33},
+    {code:'OS-GM-0007',d:'GAMMA SEAL 9RB 045X063X04.50',s:18299,gp:88.7,tx:34},
+    {code:'OS-GM-0010',d:'GAMMA SEAL 9RB 060X082X05.50',s:15190,gp:87.5,tx:20},
+    {code:'OS-GM-0044',d:'GAMMA SEAL 9RB 070X092X05.50 VITON',s:21030,gp:74.0,tx:4},
+  ]},
+ ]},
+{name:'PN-PISTON SEAL',sale:2.0,gp:60.6,tx:2050,pri:'⭐⭐',reason:'GP 60.6% K25/K50/K57/K58 Hydraulic',strat:'Target OEM Hydraulic, Application Catalog',
+ tabs:[
+  {label:'Kastas K25/K50',items:[
+    {code:'PN-PS-0020',d:'K25 PISTON 160X27X31 NBR',s:81833,gp:50.9,tx:31},
+    {code:'PN-PS-0013',d:'K25 PISTON 100X16X25 NBR',s:66353,gp:55.0,tx:80},
+    {code:'PN-PS-0024',d:'K25 PISTON 200X27X35 NBR',s:56919,gp:40.4,tx:26},
+    {code:'PN-PS-0075',d:'K50 PISTON 50X40X7 PU',s:50062,gp:73.1,tx:18},
+    {code:'PN-PS-0084',d:'K50 PISTON 80X68X8.5 PU',s:51352,gp:63.9,tx:54},
+    {code:'PN-PS-0049',d:'K50 PISTON 100X88X8.5 PU',s:51320,gp:67.5,tx:46},
+    {code:'PN-PS-0052',d:'K50 PISTON 125X110X10 PU',s:47772,gp:66.4,tx:39},
+  ]},
+  {label:'Kastas K57/K58/K62',items:[
+    {code:'PN-PS-0229',d:'K57 PISTON 25X7X8.8 NBR',s:57262,gp:57.5,tx:34},
+    {code:'PN-PS-0109',d:'K58 PISTON 80X12.1X21.5 PU',s:53022,gp:59.5,tx:4},
+    {code:'PN-PS-0122',d:'K62 PISTON 100X85X6 NBR',s:38891,gp:75.5,tx:81},
+    {code:'PN-PS-0211',d:'K62 PISTON 63X53X4 NBR',s:37586,gp:72.8,tx:95},
+    {code:'PN-PS-0213',d:'K62 PISTON 40X32X3.2 NBR',s:34062,gp:73.4,tx:77},
+  ]},
+  {label:'Kastas K51 Rod Wiper',items:[
+    {code:'PN-RS-0006',d:'K51 ROD WIPER 20X30X10.4 PU',s:122905,gp:70.5,tx:172},
+    {code:'PN-RS-0007',d:'K51 ROD WIPER 25X35X10.4 PU',s:105611,gp:75.0,tx:141},
+    {code:'PN-RS-0003',d:'K51 ROD WIPER 16X26X10.4 PU',s:53668,gp:70.9,tx:80},
+    {code:'PN-RS-0008',d:'K51 ROD WIPER 32X42X10.4 PU',s:23856,gp:68.4,tx:56},
+  ]},
+ ]},
+];
+
+// Brands
+const brands=[
+  {name:'GP:GAPI',val:67.0,color:'#79c0ff',groups:{
+    'OR-VITON':'฿30.2M','OR-NBR':'฿22.5M','OR-CORD VITON':'฿6.3M','OR-CORD NBR':'฿5.1M','OR-FFKM':'฿0.8M','HS-WEAR RING':'฿2.2M'
+  }},
+  {name:'SG:SOG',val:42.7,color:'#56d364',groups:{
+    'OS-OIL SEAL VITON':'฿21.1M','OS-OIL SEAL NBR':'฿16.5M','OS-V-RING NBR':'฿1.5M','OS-V-RING VITON':'฿1.3M','OS-GAMMA SEAL':'฿0.8M'
+  }},
+  {name:'GD:LOCAL',val:39.2,color:'#ffa657',groups:{
+    'HS-OTHER':'฿15.4M','OR-VITON':'฿4.6M','OR-NBR':'฿3.2M','OR-SILICONE':'฿2.3M','OR-EPDM':'฿1.9M','OS-OIL SEAL OTHER':'฿1.8M'
+  }},
+  {name:'HL:HALLITE',val:29.8,color:'#f78166',groups:{
+    'HS-ROD SEAL':'฿9.1M','HS-DOUBLE ACTING':'฿8.5M','HS-ROD SEAL/PISTON':'฿5.4M','HS-WIPER SEAL':'฿4.4M','HS-WEAR RING':'฿2.4M'
+  }},
+  {name:'KT:KASTAS',val:13.4,color:'#d4a853',groups:{
+    'HS-ROD SEAL/PISTON':'฿6.2M','HS-DOUBLE ACTING':'฿2.1M','PN-PISTON SEAL':'฿1.8M','HS-ROD SEAL':'฿0.9M','PN-ROD SEAL':'฿0.5M'
+  }},
+  {name:'DK:DUPONT',val:10.6,color:'#bc8cff',groups:{
+    'OR-KALREZ 6375':'฿7.0M','OR-KALREZ 4079':'฿2.5M','OR-KALREZ 7375/7075':'฿1.1M'
+  }},
+];
+
+// Overview top groups
+const topG=[
+  {n:'OR-VITON',v:36.5},{n:'OR-NBR',v:27.1},{n:'OS-OIL SEAL VITON',v:22.8},
+  {n:'OS-OIL SEAL NBR',v:18.1},{n:'HS-OTHER',v:15.7},{n:'HS-ROD SEAL/PISTON',v:13.3},
+  {n:'HS-DOUBLE ACTING',v:10.8},{n:'OR-KALREZ',v:10.6}
+];
+const gpTop5=[{n:'OR-FFKM',v:92.8},{n:'OS-GAMMA',v:88.1},{n:'OR-KALREZ',v:74.7},{n:'OS-V-RING VITON',v:70.5},{n:'OR-VITON',v:70.0}];
+const gpGrps=[{n:'OR-FFKM',v:92.8},{n:'OS-GAMMA',v:88.1},{n:'OR-KALREZ',v:74.7},{n:'OS-V-RING VITON',v:70.5},{n:'OR-VITON',v:70.0},{n:'OR-KIT',v:69.8},{n:'HS-WIPER',v:65.4},{n:'OR-NBR',v:65.8},{n:'OR-FEP',v:77.3},{n:'PN-ROD SEAL',v:65.1}];
+const monthly=[14.51,14.89,15.12,13.18,14.47,16.24,15.68,15.09,14.68,16.32,13.64,12.56];
+const ML=['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+
+// ===================== UTILS =====================
+function fmt(v,d=2){return Number(v).toLocaleString('th-TH',{minimumFractionDigits:d,maximumFractionDigits:d});}
+function fmtM(v){const m=v/1e6;return m>=0.1?'฿'+fmt(m,2)+'M':'฿'+fmt(v/1000,0)+'K';}
+function gpp(v,big=false){
+  if(isNaN(v)||v==null)return '<span class="p pb">N/A</span>';
+  const c=v>=70?'pg':v>=50?'po':'pr';
+  return `<span class="p ${c}">${fmt(v,1)}%</span>`;
+}
+const CO={accent:'#79c0ff',grn:'#56d364',org:'#ffa657',red:'#f78166',gold:'#d4a853'};
+const cOpts={responsive:true,maintainAspectRatio:true,plugins:{legend:{labels:{color:'#8b949e',font:{size:10,family:'Sarabun'}}}}};
+
+// ===================== OVERVIEW CHARTS =====================
+new Chart(document.getElementById('cMon'),{type:'bar',
+  data:{labels:ML,datasets:[{label:'ยอดขาย (M฿)',data:monthly,backgroundColor:'rgba(121,192,255,.25)',borderColor:'#79c0ff',borderWidth:2,borderRadius:5}]},
+  options:{...cOpts,scales:{x:{ticks:{color:'#8b949e'},grid:{color:'rgba(48,54,61,.5)'}},y:{ticks:{color:'#8b949e',callback:v=>`฿${v}M`},grid:{color:'rgba(48,54,61,.5)'}}}}
+});
+
+const grpChart=new Chart(document.getElementById('cGrp'),{type:'doughnut',
+  data:{labels:topG.map(g=>g.n),datasets:[{data:topG.map(g=>g.v),backgroundColor:PAL,borderWidth:0}]},
+  options:{...cOpts,cutout:'58%',plugins:{legend:{position:'right',labels:{color:'#8b949e',font:{size:10},boxWidth:10}},
+    tooltip:{callbacks:{label:c=>`฿${c.raw}M`}}}}
+});
+document.getElementById('cGrp').onclick=function(e){
+  const pts=grpChart.getElementsAtEventForMode(e,'nearest',{intersect:true},true);
+  if(pts.length){openGroupFromOverview(pts[0].index);}
+};
+
+const maxB=brands[0].val;
+document.getElementById('bList').innerHTML=brands.map((b,i)=>`
+  <div class="brow" onclick="openBrandModal(${i})">
+    <div class="bn">${b.name}</div>
+    <div class="bbw"><div class="bb" style="width:${(b.val/maxB*100).toFixed(1)}%;background:${b.color}"></div></div>
+    <div class="bv">฿${fmt(b.val,1)}M</div>
+  </div>`).join('');
+
+new Chart(document.getElementById('cGP'),{type:'doughnut',
+  data:{labels:gpTop5.map(g=>g.n),datasets:[{data:gpTop5.map(g=>g.v),backgroundColor:[CO.gold,CO.grn,CO.accent,'#bc8cff',CO.org],borderWidth:0}]},
+  options:{...cOpts,cutout:'55%',plugins:{legend:{position:'right',labels:{color:'#8b949e',font:{size:10},boxWidth:10}},tooltip:{callbacks:{label:c=>`GP%: ${c.raw}%`}}}}
+});
+
+// ===================== TOP 100 TABLE =====================
+let currentFilter='all';
+const t10d=top100.slice(0,10);
+new Chart(document.getElementById('cT10'),{type:'bar',
+  data:{labels:t10d.map(r=>r.code),datasets:[
+    {label:'Sale (M฿)',data:t10d.map(r=>(r.s/1e6).toFixed(2)),backgroundColor:'rgba(121,192,255,.65)',borderRadius:4,yAxisID:'y'},
+    {label:'GP%',data:t10d.map(r=>r.gp),backgroundColor:'rgba(86,211,100,.5)',borderRadius:4,yAxisID:'y1'}
+  ]},
+  options:{...cOpts,scales:{
+    x:{ticks:{color:'#8b949e',font:{size:8}},grid:{color:'rgba(48,54,61,.4)'}},
+    y:{position:'left',ticks:{color:'#79c0ff',callback:v=>`฿${v}M`},grid:{color:'rgba(48,54,61,.3)'}},
+    y1:{position:'right',ticks:{color:'#56d364',callback:v=>`${v}%`},grid:{drawOnChartArea:false}}
+  }}
+});
+
+// ===================== SORT ENGINE =====================
+const sortState={};
+function sortTable(tableId,colIdx,type){
+  const prev=sortState[tableId]||{col:-1,asc:true};
+  const asc=prev.col===colIdx?!prev.asc:true;
+  sortState[tableId]={col:colIdx,asc};
+  const tbl=document.getElementById(tableId);
+  if(!tbl) return;
+  tbl.querySelectorAll('thead th').forEach((th,i)=>{
+    th.classList.remove('sort-asc','sort-desc');
+    if(i===colIdx) th.classList.add(asc?'sort-asc':'sort-desc');
+  });
+  const tbody=tbl.querySelector('tbody');
+  const rows=Array.from(tbody.querySelectorAll('tr'));
+  rows.sort((a,b)=>{
+    const ac=a.cells[colIdx]; const bc=b.cells[colIdx];
+    // prefer data-val for numeric, else textContent
+    const av=ac?(type==='num'&&ac.dataset.val!==undefined?ac.dataset.val:ac.textContent.trim()):'';
+    const bv=bc?(type==='num'&&bc.dataset.val!==undefined?bc.dataset.val:bc.textContent.trim()):'';
+    let cmp=0;
+    if(type==='num'){
+      const an=parseFloat(String(av).replace(/[^0-9.\-]/g,''))||0;
+      const bn=parseFloat(String(bv).replace(/[^0-9.\-]/g,''))||0;
+      cmp=an-bn;
+    } else { cmp=String(av).localeCompare(String(bv),'th'); }
+    return asc?cmp:-cmp;
+  });
+  rows.forEach(r=>tbody.appendChild(r));
+}
+
+function attachSort(tableId,colDefs){
+  setTimeout(()=>{
+    const tbl=document.getElementById(tableId);
+    if(!tbl) return;
+    tbl.querySelectorAll('thead th').forEach((th,i)=>{
+      const def=colDefs[i]||{type:'str'};
+      if(def.noSort){th.classList.add('no-sort');return;}
+      th.title='คลิกเพื่อเรียง ▲▼';
+      th.onclick=()=>sortTable(tableId,i,def.type);
+    });
+  },80);
+}
+
+// ===================== TOP 100 TABLE =====================
+function renderTop(f='all'){
+  currentFilter=f;
+  ['all','HS','OR','OS','PN'].forEach(k=>{
+    const b=document.getElementById('fb-'+k);
+    if(b){b.style.background=k===f?'rgba(121,192,255,.2)':'var(--sur)';b.style.color=k===f?'var(--b)':'var(--mu)';b.style.borderColor=k===f?'rgba(121,192,255,.4)':'var(--bdr)';}
+  });
+  const data=f==='all'?top100:top100.filter(r=>r.g.startsWith(f));
+  document.getElementById('tTop').innerHTML=`
+    <thead><tr>
+      <th title="เรียงตามอันดับ">#</th>
+      <th>Code</th>
+      <th>รายการสินค้า</th>
+      <th>หมวด</th>
+      <th>Brand</th>
+      <th>Sale</th>
+      <th>Qty</th>
+      <th>GP%</th>
+      <th>Tx</th>
+    </tr></thead>
+    <tbody>${data.map((r,i)=>`<tr onclick="openTopModal(${r.r-1})">
+      <td class="rk ${r.r<=3?'rk'+r.r:''}">${r.r<=3?['🥇','🥈','🥉'][r.r-1]:r.r}</td>
+      <td style="font-family:monospace;font-size:.7rem;color:var(--mu)">${r.code}</td>
+      <td title="${r.d}">${r.d}</td>
+      <td><span class="p pb" style="font-size:.65rem">${r.g}</span></td>
+      <td style="font-size:.72rem;color:var(--mu)">${r.br}</td>
+      <td class="r" data-val="${r.s}">${fmtM(r.s)}</td>
+      <td class="r" data-val="${r.q}">${Number(r.q).toLocaleString('th-TH')}</td>
+      <td data-val="${r.gp}">${gpp(r.gp)}</td>
+      <td class="r" data-val="${r.tx}">${r.tx}</td>
+    </tr>`).join('')}</tbody>`;
+  // col: 0=#  1=code 2=desc 3=group 4=brand 5=sale 6=qty 7=gp 8=tx
+  attachSort('tTop',[
+    {type:'num'},{type:'str'},{type:'str'},{type:'str'},{type:'str'},
+    {type:'num'},{type:'num'},{type:'num'},{type:'num'}
+  ]);
+}
+function filterT(f){renderTop(f);}
+renderTop();
+
+// ===================== STOCK TABLE =====================
+new Chart(document.getElementById('cCmp'),{type:'bar',
+  data:{labels:['ม.ค.','ก.พ.','มี.ค.'],datasets:[
+    {label:'2025',data:[14.51,14.89,15.12],backgroundColor:'rgba(121,192,255,.6)',borderRadius:5},
+    {label:'2026',data:[14.22,14.63,10.80],backgroundColor:'rgba(247,129,102,.6)',borderRadius:5}
+  ]},
+  options:{...cOpts,scales:{x:{ticks:{color:'#8b949e'},grid:{color:'rgba(48,54,61,.5)'}},y:{ticks:{color:'#8b949e',callback:v=>`฿${v}M`},grid:{color:'rgba(48,54,61,.5)'}}}}
+});
+new Chart(document.getElementById('cGPb'),{type:'bar',
+  data:{labels:gpGrps.map(g=>g.n),datasets:[{label:'GP%',data:gpGrps.map(g=>g.v),
+    backgroundColor:gpGrps.map(g=>g.v>=80?CO.gold:g.v>=70?CO.grn:'rgba(255,166,87,.7)'),borderRadius:4}]},
+  options:{...cOpts,indexAxis:'y',scales:{
+    x:{ticks:{color:'#8b949e',callback:v=>`${v}%`},grid:{color:'rgba(48,54,61,.4)'},max:100},
+    y:{ticks:{color:'#8b949e',font:{size:9}},grid:{color:'rgba(48,54,61,.4)'}}},
+    plugins:{legend:{display:false}}}
+});
+document.getElementById('tStk').innerHTML=`
+  <thead><tr>
+    <th>Code</th><th>รายการสินค้า</th><th>หมวด</th><th>Brand</th>
+    <th>Tx</th><th>Qty</th><th>GP%</th><th>ระดับ</th>
+  </tr></thead>
+  <tbody>${stockItems.map((r,i)=>`<tr onclick="openStkModal(${i})">
+    <td style="font-family:monospace;font-size:.7rem;color:var(--mu)">${r.code}</td>
+    <td title="${r.d}">${r.d}</td>
+    <td><span class="p pb" style="font-size:.65rem">${r.g}</span></td>
+    <td style="font-size:.7rem;color:var(--mu)">${r.br}</td>
+    <td class="r" style="color:var(--o);font-weight:700" data-val="${r.tx}">${r.tx}</td>
+    <td class="r" data-val="${r.q}">${Number(r.q).toLocaleString('th-TH')}</td>
+    <td data-val="${r.gp}">${gpp(r.gp)}</td>
+    <td data-val="${r.lv==='HIGH'?1:0}">${r.lv==='HIGH'?'<span class="p pr">🔴 สูง</span>':'<span class="p po">🟡 กลาง</span>'}</td>
+  </tr>`).join('')}</tbody>`;
+attachSort('tStk',[
+  {type:'str'},{type:'str'},{type:'str'},{type:'str'},
+  {type:'num'},{type:'num'},{type:'num'},{type:'str'}
+]);
+
+// ===================== MARKETING CARDS =====================
+function renderMK(){
+  document.getElementById('gGrid').innerHTML=GRP.map((g,i)=>`
+    <div class="gcard" id="gc${i}" onclick="toggleGC(${i})">
+      <div class="gch">
+        <div class="gci">
+          <div class="gcn">${g.name}</div>
+          <div class="gcm">${g.pri} · ฿${g.sale}M · GP ${g.gp}%</div>
+        </div>
+        <div class="gcs">
+          <div class="gcst"><div class="gcsv" style="color:#79c0ff">฿${g.sale}M</div><div class="gcsl">Sale</div></div>
+          <div class="gcst"><div class="gcsv" style="color:${g.gp>=70?'#d4a853':g.gp>=55?'#56d364':'#ffa657'}">${g.gp}%</div><div class="gcsl">GP%</div></div>
+        </div>
+        <div class="gcarr">▼</div>
+      </div>
+      <div class="gcb" id="gcb${i}">
+        <div class="ptabs">${g.tabs.map((t,ti)=>`<div class="ptab ${ti===0?'active':''}" onclick="event.stopPropagation();switchPTab(${i},${ti})">${t.label}</div>`).join('')}</div>
+        ${g.tabs.map((t,ti)=>`
+        <div class="plist ${ti===0?'active':''}" id="pt${i}_${ti}">
+          <table class="mt" id="mt${i}_${ti}">
+            <thead><tr><th>Item Code</th><th>รายการสินค้า</th><th>Sale</th><th>GP%</th><th>Tx</th></tr></thead>
+            <tbody>${t.items.map((p,pi)=>`<tr onclick="event.stopPropagation();openProdModal(${i},${ti},${pi})">
+              <td style="font-family:monospace;font-size:.67rem;color:var(--mu)">${p.code}</td>
+              <td title="${p.d}">${p.d}</td>
+              <td class="r" data-val="${p.s}">${fmtM(p.s)}</td>
+              <td data-val="${p.gp}" class="r">${gpp(p.gp)}</td>
+              <td class="r" data-val="${p.tx}">${p.tx}</td>
+            </tr>`).join('')}</tbody>
+          </table>
+        </div>`).join('')}
+        <div class="pbox">💡 กลยุทธ์: ${g.strat}</div>
+      </div>
+    </div>`).join('');
+}
+renderMK();
+// Attach sort to all marketing mini tables after render
+setTimeout(()=>{
+  GRP.forEach((g,i)=>g.tabs.forEach((_,ti)=>{
+    attachSort(`mt${i}_${ti}`,[{type:'str'},{type:'str'},{type:'num'},{type:'num'},{type:'num'}]);
+  }));
+},100);
+function toggleGC(i){document.getElementById('gc'+i).classList.toggle('exp');}
+function switchPTab(gi,ti){
+  const g=GRP[gi];
+  g.tabs.forEach((_,j)=>{
+    document.querySelectorAll(`#gcb${gi} .ptab`)[j].classList.toggle('active',j===ti);
+    document.getElementById(`pt${gi}_${j}`).classList.toggle('active',j===ti);
+  });
+}
+
+// ===================== INSIGHTS PAGE =====================
+const insights=[
+  {tag:'tag-warn',icon:'⚠️',title:'ยอดขาย มี.ค. 2026 ลดลง -28.5%',text:'จาก ฿15.1M เหลือ ฿10.8M ต้องเร่ง Promote ใน Q2 และติดตาม Root Cause ว่าเกิดจาก Seasonal หรือ Competition'},
+  {tag:'tag-opp',icon:'💰',title:'OR-FFKM: GP 92.8% โอกาสทอง',text:'ยังขายได้น้อย (7 transactions) แต่ GP สูงสุดในระบบ ควร Target ลูกค้า Semiconductor, Pharma, Chemical โดยตรง'},
+  {tag:'tag-opp',icon:'📈',title:'T38 DUST WIPER GP 96.7%',text:'ยอดขาย ฿1M GP เกือบ 100% ควรเป็น Hero Product ในทุก Catalog และ Campaign มี Bundle กับ Rod Seal'},
+  {tag:'tag-gold',icon:'🎯',title:'OR-NBR: 131K transactions = Loyalty Base',text:'ลูกค้าซื้อบ่อยมาก ควรสร้าง Loyalty Program, Auto-Order System เพื่อรักษาฐานลูกค้าและเพิ่ม Recurring Revenue'},
+  {tag:'tag-info',icon:'📦',title:'Stock Risk: T780 DAS 648 tx',text:'สินค้าที่ลูกค้าพึ่งพามากสุด ถ้าขาด Stock จะกระทบ Revenue และ Reputation ต้องมี Safety Stock ≥ 3 เดือน'},
+  {tag:'tag-warn',icon:'📉',title:'OR-SILICONE GP 31.4% ต่ำสุด',text:'ยอดขาย ฿2.3M แต่ Margin ต่ำมาก ควรตรวจ Pricing โครงสร้างต้นทุน หรือ Switch ไป Focus สินค้า GP สูงกว่า'},
+  {tag:'tag-opp',icon:'🔗',title:'Cross-sell: OR-VITON + OS-OIL SEAL VITON',text:'ลูกค้าที่ซื้อ O-Ring Viton มักต้องการ Oil Seal Viton ด้วย ควรทำ Bundle Package ร่วมกันเพื่อเพิ่ม AOV'},
+  {tag:'tag-gold',icon:'💎',title:'Kalrez Premium: GP 74.7% ฿10.6M',text:'Brand DuPont มีสินค้า GP สูงและเป็น Specialty Chemical Seal ควรทำ Dedicated Catalog และ Technical Seminar'},
+  {tag:'tag-info',icon:'🏭',title:'OS-GAMMA SEAL: GP 88% ขายได้ 1,434 tx',text:'GP สูงมากและขายต่อเนื่อง ควร Feature ใน Catalog และ Cross-sell กับ Oil Seal NBR/Viton'},
+  {tag:'tag-opp',icon:'🌐',title:'HS-ROD SEAL/PISTON: ฿13.3M ยังเติบโต',text:'Hallite T601 และ Kastas K21 ขายได้ดี ควรทำ Technical Drawing Catalog และ Fast Delivery เพื่อ Win B2B'},
+  {tag:'tag-warn',icon:'🕐',title:'HS-OTHER GP 33.9%: ปรับกลยุทธ์',text:'ยอด ฿15.7M สูงมากแต่ Margin ต่ำ ควร Shift Focus ไปที่ SEAL EPDM/VITON T-Ring ที่ GP 53%+ ในหมวดเดียวกัน'},
+  {tag:'tag-gold',icon:'🎁',title:'O-Ring Kit Set: GP 69.8% เหมาะ MRO Market',text:'ECOSEAL Kit มี GP ดีและขายซ้ำได้ เหมาะ Target ช่างซ่อมบำรุง โรงงาน MRO ทำ Branded Box + Gift Set'},
+];
+document.getElementById('insGrid').innerHTML=insights.map(ins=>`
+  <div class="icard">
+    <div class="icard-tag ${ins.tag}">${ins.icon} ${ins.tag.replace('tag-','').toUpperCase()}</div>
+    <h4>${ins.title}</h4>
+    <p>${ins.text}</p>
+  </div>`).join('');
+
+// Insights charts
+new Chart(document.getElementById('cRev'),{type:'line',
+  data:{labels:ML,datasets:[
+    {label:'2025 (M฿)',data:monthly,borderColor:'#79c0ff',backgroundColor:'rgba(121,192,255,.1)',tension:.4,fill:true,pointRadius:3},
+    {label:'2026 Q1 (M฿)',data:[14.22,14.63,10.80,...Array(9).fill(null)],borderColor:'#f78166',backgroundColor:'rgba(247,129,102,.1)',tension:.4,borderDash:[5,3],pointRadius:3}
+  ]},
+  options:{...cOpts,scales:{x:{ticks:{color:'#8b949e'},grid:{color:'rgba(48,54,61,.5)'}},y:{ticks:{color:'#8b949e',callback:v=>`฿${v}M`},grid:{color:'rgba(48,54,61,.5)'}}}}
+});
+new Chart(document.getElementById('cBGP'),{type:'radar',
+  data:{labels:['OR-VITON','OR-NBR','OS-VITON','OR-KALREZ','HS-WIPER','OS-GAMMA'],
+    datasets:[{label:'GP%',data:[70.0,65.8,50.3,74.7,65.4,88.1],backgroundColor:'rgba(212,168,83,.2)',borderColor:'#d4a853',pointBackgroundColor:'#d4a853'}]},
+  options:{responsive:true,scales:{r:{ticks:{color:'#8b949e',backdropColor:'transparent'},grid:{color:'rgba(48,54,61,.6)'},pointLabels:{color:'#8b949e',font:{size:9}}}},
+    plugins:{legend:{labels:{color:'#8b949e',font:{size:10}}}}}
+});
+
+// Action plan
+const actions=[
+  {period:'30 วัน',action:'Loyalty Program OR-NBR/VITON',impact:'ลด Churn, เพิ่ม Repeat Order 10%+',owner:'Sales'},
+  {period:'30 วัน',action:'Stock Review T780 DAS + OR-NBR Series',impact:'ลด Stockout Risk',owner:'Warehouse'},
+  {period:'30 วัน',action:'Push T38 Dust Wiper GP 96.7% ใน Campaign',impact:'เพิ่ม Margin ทันที',owner:'Marketing'},
+  {period:'60 วัน',action:'Bundle Package OR-VITON + OS-OIL SEAL VITON',impact:'เพิ่ม AOV 15-25%',owner:'Sales+Marketing'},
+  {period:'60 วัน',action:'Kalrez Technica Catalog + Direct Email',impact:'Target Semiconductor/Pharma',owner:'Marketing'},
+  {period:'60 วัน',action:'ตรวจ Pricing OR-SILICONE (GP 31.4%)',impact:'เพิ่ม Margin หรือ Cut ไปสินค้าดีกว่า',owner:'Management'},
+  {period:'90 วัน',action:'O-Ring Kit Branded Box + MRO Campaign',impact:'เปิดตลาดช่างและ Maintenance',owner:'Marketing'},
+  {period:'90 วัน',action:'OR-FFKM ขยาย SKU + Target Industrial',impact:'GP 92% ต้องโตจาก 7 → 30+ tx',owner:'Sales'},
+  {period:'90 วัน',action:'Auto-Replenishment System สำหรับ High-Tx Items',impact:'ลด Lost Sale, เพิ่ม Customer Satisfaction',owner:'IT+Ops'},
+];
+document.getElementById('tAction').innerHTML=`
+  <thead><tr><th>ระยะเวลา</th><th>Action</th><th>ผลที่คาดหวัง</th><th>ผู้รับผิดชอบ</th></tr></thead>
+  <tbody>${actions.map(a=>`<tr>
+    <td data-val="${a.period.startsWith('30')?1:a.period.startsWith('60')?2:3}"><span class="p ${a.period.startsWith('30')?'pr':a.period.startsWith('60')?'po':'pg'}">${a.period}</span></td>
+    <td style="font-weight:600">${a.action}</td>
+    <td style="font-size:.78rem;color:var(--mu)">${a.impact}</td>
+    <td><span class="p pb">${a.owner}</span></td>
+  </tr>`).join('')}</tbody>`;
+attachSort('tAction',[{type:'num'},{type:'str'},{type:'str'},{type:'str'}]);
+
+// ===================== MODALS =====================
+function openModal(title,sub,k1,k2,k3,body){
+  document.getElementById('mtit').textContent=title;
+  document.getElementById('msub').textContent=sub;
+  document.getElementById('mkpis').innerHTML=
+    `<div class="mkpi"><div class="mkv" style="color:${k1.c}">${k1.v}</div><div class="mkl">${k1.l}</div></div>`+
+    `<div class="mkpi"><div class="mkv" style="color:${k2.c}">${k2.v}</div><div class="mkl">${k2.l}</div></div>`+
+    `<div class="mkpi"><div class="mkv" style="color:${k3.c}">${k3.v}</div><div class="mkl">${k3.l}</div></div>`;
+  document.getElementById('mbody').innerHTML=body;
+  document.getElementById('modal').classList.add('open');
+}
+function closeMO(e){if(e.target===document.getElementById('modal'))closeMObtn();}
+function closeMObtn(){document.getElementById('modal').classList.remove('open');}
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeMObtn();});
+
+function openTopModal(i){
+  const r=top100[i];
+  openModal(r.d,r.code+' · '+r.g,
+    {v:fmtM(r.s),l:'Sale Amount',c:'#79c0ff'},
+    {v:r.gp.toFixed(1)+'%',l:'GP%',c:r.gp>=70?'#d4a853':r.gp>=50?'#56d364':'#ffa657'},
+    {v:r.tx,l:'Transactions',c:'#ffa657'},
+    `<div class="mst">ข้อมูลสินค้า</div>
+    <table class="mt"><tbody>
+      <tr><td style="color:var(--mu);width:100px">หมวดสินค้า</td><td>${r.g}</td></tr>
+      <tr><td style="color:var(--mu)">Brand</td><td>${r.br}</td></tr>
+      <tr><td style="color:var(--mu)">ปริมาณขาย</td><td>${Number(r.q).toLocaleString('th-TH')} ชิ้น</td></tr>
+      <tr><td style="color:var(--mu)">อันดับ</td><td>#${r.r} จาก Top 100</td></tr>
+    </tbody></table>
+    <div class="mst">คำแนะนำ</div>
+    <div class="ibox" style="background:rgba(121,192,255,.07);border-left:2px solid #79c0ff">${r.gp>=90?'GP สูงมาก เหมาะ Push ใน Campaign เป็น Star Product':r.gp>=70?'GP ดี เหมาะ Promote และ Bundle กับสินค้าอื่น':r.tx>=200?'Transaction สูง ต้องดูแล Stock ไม่ให้ขาด':'สินค้า Top '+r.r+' ควรมีใน Catalog และ Stock'}</div>`
+  );
+}
+function openStkModal(i){
+  const r=stockItems[i];
+  openModal(r.d,r.code+' · '+r.g,
+    {v:r.tx,l:'Transactions',c:'#ffa657'},
+    {v:Number(r.q).toLocaleString('th-TH'),l:'Qty ขาย',c:'#79c0ff'},
+    {v:r.gp.toFixed(1)+'%',l:'GP%',c:r.gp>=70?'#d4a853':'#56d364'},
+    `<div class="mst">สถานะ Stock</div>
+    <div style="margin-bottom:9px">${r.lv==='HIGH'?'<span class="p pr">🔴 ความต้องการสูงมาก — ต้องรักษา Stock ตลอด</span>':'<span class="p po">🟡 ความต้องการกลาง</span>'}</div>
+    <table class="mt"><tbody>
+      <tr><td style="color:var(--mu);width:90px">หมวด</td><td>${r.g}</td></tr>
+      <tr><td style="color:var(--mu)">Brand</td><td>${r.br}</td></tr>
+      <tr><td style="color:var(--mu)">ยอดขาย</td><td>฿${fmt(r.s,2)}M</td></tr>
+    </tbody></table>
+    <div class="mst">คำแนะนำ Stock</div>
+    <div class="ibox" style="background:rgba(247,129,102,.07);border-left:2px solid #f78166">${r.note}</div>`
+  );
+}
+function openProdModal(gi,ti,pi){
+  const g=GRP[gi]; const p=g.tabs[ti].items[pi];
+  openModal(p.d,p.code+' · '+g.name,
+    {v:fmtM(p.s),l:'Sale Amount',c:'#79c0ff'},
+    {v:p.gp.toFixed(1)+'%',l:'GP%',c:p.gp>=70?'#d4a853':p.gp>=50?'#56d364':'#ffa657'},
+    {v:p.tx,l:'Transactions',c:'#ffa657'},
+    `<div class="mst">เหตุผลแนะนำ Promote</div>
+    <div class="ibox" style="background:rgba(121,192,255,.07);border-left:2px solid #79c0ff;margin-bottom:10px">${g.reason}</div>
+    <div class="mst">กลยุทธ์การตลาด</div>
+    <div class="ibox" style="background:rgba(212,168,83,.07);border-left:2px solid #d4a853">${g.strat}</div>`
+  );
+}
+function openBrandModal(i){
+  const b=brands[i];
+  const rows=Object.entries(b.groups).map(([k,v])=>`<tr><td>${k}</td><td class="r" style="font-family:'Space Grotesk',sans-serif;color:var(--b)">${v}</td></tr>`).join('');
+  openModal(b.name,'Brand Profile — ยอดขาย ฿'+fmt(b.val,1)+'M',
+    {v:'฿'+fmt(b.val,1)+'M',l:'Total Sale',c:b.color},
+    {v:((b.val/216.0)*100).toFixed(1)+'%',l:'Market Share',c:'#56d364'},
+    {v:'สินค้า Top',l:'หมวดที่ขายดี',c:'#ffa657'},
+    `<div class="mst">ยอดขายรายหมวดสินค้า</div>
+    <table class="mt"><thead><tr><th>หมวดสินค้า</th><th>ยอดขาย</th></tr></thead><tbody>${rows}</tbody></table>`
+  );
+}
+function openGroupFromOverview(idx){
+  const g=topG[idx];
+  const grpData=GRP.find(x=>x.name===g.n);
+  if(grpData){
+    // Switch to marketing tab and expand card
+    sw('mk');
+    const ci=GRP.findIndex(x=>x.name===g.n);
+    if(ci>=0){
+      const card=document.getElementById('gc'+ci);
+      if(card&&!card.classList.contains('exp')){card.classList.add('exp');}
+      setTimeout(()=>card.scrollIntoView({behavior:'smooth',block:'center'}),200);
+    }
+  } else {
+    openModal(g.n,'หมวดสินค้า',{v:'฿'+g.v+'M',l:'Sale',c:'#79c0ff'},{v:'-',l:'GP%',c:'#56d364'},{v:'-',l:'Tx',c:'#ffa657'},
+      `<div class="ibox" style="background:rgba(121,192,255,.07);border-left:2px solid #79c0ff">ดูรายละเอียดเพิ่มเติมใน แท็บ 🎯 การตลาดรายหมวด</div>`);
+  }
+}
+
+// ===================== TAB SWITCH =====================
+function sw(name){
+  const pages=['ov','ts','sk','mk','in'];
+  document.querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('active',pages[i]===name));
+  document.querySelectorAll('[id^="pg-"]').forEach(p=>{
+    // only target pages not pills
+    if(['pg-ov','pg-ts','pg-sk','pg-mk','pg-in'].includes(p.id))
+      p.classList.toggle('active',p.id==='pg-'+name);
+  });
+}
+</script>
+</body>
+</html>
