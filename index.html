@@ -546,8 +546,9 @@ async function loadDocType(){
   const res=await sbFetch(`${SURL}/rest/v1/${STBL}?select=doc_type,total_sales${qs}&limit=5000`);
   if(!res.ok) throw new Error(`DocType: HTTP ${res.status}`);
   const rows=await res.json();
+  const arr=Array.isArray(rows)?rows:[];
   const bg={};
-  rows.forEach(r=>{const k=r.doc_type||'—';bg[k]=(bg[k]||0)+(+r.total_sales||0);});
+  arr.forEach(r=>{const k=r.doc_type||'—';bg[k]=(bg[k]||0)+(+r.total_sales||0);});
   G('chartDTWrap').innerHTML='<canvas id="cDT" height="185"></canvas>';
   dc('cDT');
   charts.cDT=new Chart(G('cDT'),{type:'doughnut',
