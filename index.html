@@ -70,6 +70,8 @@ select:focus{border-color:var(--accent)}
 .rl{list-style:none}
 .ri{display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border)}
 .ri:last-child{border-bottom:none}
+.ri-click{cursor:pointer;transition:background .15s}
+.ri-click:hover{background:#F5F4F0;border-radius:6px;padding-left:4px}
 .rn{width:19px;height:19px;border-radius:50%;background:var(--bg);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0;color:var(--muted)}
 .rn.top{background:var(--accent);border-color:var(--accent);color:#fff}
 .rnm{flex:1;font-size:12px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -201,6 +203,7 @@ tr:last-child td{border-bottom:none}
     <div><div class="hdr-title">AR Sales Dashboard</div><div class="hdr-sub">Ecoseal Co., Ltd.</div></div>
   </div>
   <div class="hdr-r">
+    <span id="dateRange" style="display:none;font-size:11px;color:var(--muted);font-family:var(--mono);background:var(--bg);border:1px solid var(--border);padding:3px 10px;border-radius:20px"></span>
     <span class="lupd" id="lupd">—</span>
     <button class="btn-o" id="btnRef" onclick="applyF()">⟳ Refresh</button>
     <button class="btn-g" onclick="showCfg()">⚙️</button>
@@ -285,6 +288,12 @@ let SURL  = localStorage.getItem('eco_url')  || 'https://iojhinczacwuvirzlgut.su
 let SKEY  = localStorage.getItem('eco_key')  || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlvamhpbmN6YWN3dXZpcnpsZ3V0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgwNTQzODksImV4cCI6MjA5MzYzMDM4OX0.opHHtidHrRt54VD-6yjP-i7uSOTlTHJbkFmCYh7Cg7s';
 let STBL  = localStorage.getItem('eco_tbl')  || 'ar_sales_summary';
 let STBL2 = localStorage.getItem('eco_tbl2') || 'ar_item_summary';
+
+// บันทึกลง localStorage ทุกครั้งที่เปิด
+localStorage.setItem('eco_url',  SURL);
+localStorage.setItem('eco_key',  SKEY);
+localStorage.setItem('eco_tbl',  STBL);
+localStorage.setItem('eco_tbl2', STBL2);
 const PAL=['#C8651A','#2A6496','#2E7D5B','#8B5CF6','#D97706','#DB2777','#0891B2','#65A30D','#DC2626','#7C3AED','#059669','#B45309'];
 
 // ════ UTILS (ต้องอยู่บนสุดก่อน function อื่น) ════
@@ -329,22 +338,51 @@ async function init(){
   showL('กำลังโหลด filter options...');
   G('btnRef').disabled=true;
   try{
-    // โหลด distinct values สำหรับ dropdown — เร็วมาก
-    const [yrs,igs,cgs]=await Promise.all([
+    // โหลด distinct values + date range พร้อมกัน
+    const [yrs,igs,cgs,dateRange]=await Promise.all([
       qDistinct('yr'),
       qDistinct('item_group_name'),
-      qDistinct('group_customer')
+      qDistinct('group_customer'),
+      getDateRange()
     ]);
     fillSel('fY', yrs.map(r=>r.yr).filter(Boolean).sort().reverse());
     fillSel('fIG', igs.map(r=>r.item_group_name).filter(Boolean).sort());
     fillSel('fCG', cgs.map(r=>r.group_customer).filter(Boolean).sort());
-    G('lupd').innerHTML=`<span class="dot"></span>พร้อมใช้งาน`;
-    applyF(); // โหลด dashboard data
+
+    // แสดงช่วงข้อมูล
+    if(dateRange.min && dateRange.max){
+      const minD=fmtDate(dateRange.min), maxD=fmtDate(dateRange.max);
+      G('dateRange').textContent=`ข้อมูล ${minD} – ${maxD}`;
+      G('dateRange').style.display='inline-block';
+    }
+
+    applyF();
   }catch(e){
     showErr('โหลดไม่สำเร็จ: '+e.message);
   }finally{
     hideL(); G('btnRef').disabled=false;
   }
+}
+
+async function getDateRange(){
+  try{
+    const [minRes,maxRes]=await Promise.all([
+      sbFetch(`${SURL}/rest/v1/${STBL}?select=posting_date&order=posting_date.asc.nullslast&limit=1`),
+      sbFetch(`${SURL}/rest/v1/${STBL}?select=posting_date&order=posting_date.desc.nullslast&limit=1`)
+    ]);
+    const [minR,maxR]=await Promise.all([minRes.json(),maxRes.json()]);
+    return {
+      min: Array.isArray(minR)&&minR[0]?minR[0].posting_date:null,
+      max: Array.isArray(maxR)&&maxR[0]?maxR[0].posting_date:null
+    };
+  }catch(e){ return {min:null,max:null}; }
+}
+
+function fmtDate(d){
+  if(!d) return '—';
+  const dt=new Date(d);
+  const months=['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+  return `${dt.getDate()} ${months[dt.getMonth()]} ${dt.getFullYear()+543}`;
 }
 
 // distinct query
@@ -364,14 +402,13 @@ function sbFetch(url, opts={}){
 }
 
 // ════ BUILD FILTER QUERY STRING ════
-function filterQS(extra={}){
-  const p=new URLSearchParams();
-  if(aDT)  p.append('doc_type',   `eq.${aDT}`);
-  if(aYr)  p.append('yr',         `eq.${aYr}`);
-  if(aIG)  p.append('item_group_name', `eq.${encodeURIComponent(aIG)}`);
-  if(aCG)  p.append('group_customer',  `eq.${encodeURIComponent(aCG)}`);
-  Object.entries(extra).forEach(([k,v])=>p.append(k,v));
-  return p.toString() ? '&'+p.toString() : '';
+function filterQS(){
+  const parts=[];
+  if(aDT) parts.push(`doc_type=eq.${encodeURIComponent(aDT)}`);
+  if(aYr) parts.push(`yr=eq.${encodeURIComponent(aYr)}`);
+  if(aIG) parts.push(`item_group_name=eq.${encodeURIComponent(aIG)}`);
+  if(aCG) parts.push(`group_customer=eq.${encodeURIComponent(aCG)}`);
+  return parts.length ? '&'+parts.join('&') : '';
 }
 
 // ════ APPLY FILTERS → query Supabase ════
@@ -407,29 +444,47 @@ G('fY').onchange =()=>{aYr=G('fY').value; applyF();};
 G('fIG').onchange=()=>{aIG=G('fIG').value; applyF();};
 G('fCG').onchange=()=>{aCG=G('fCG').value; applyF();};
 
-// ════ KPIs — ใช้ RPC function แทน paginate ════
+// ════ KPIs — ใช้ RPC function ════
 async function loadKPIs(){
-  const body={};
-  if(aDT) body.p_doc_type=aDT;
-  if(aYr) body.p_yr=parseInt(aYr);
-  if(aIG) body.p_item_group=aIG;
-  if(aCG) body.p_group_customer=aCG;
+  try{
+    const body={};
+    if(aDT) body.p_doc_type=aDT;
+    if(aYr) body.p_yr=parseInt(aYr);
+    if(aIG) body.p_item_group=aIG;
+    if(aCG) body.p_group_customer=aCG;
 
-  const res=await sbFetch(`${SURL}/rest/v1/rpc/get_ar_kpis`,{
-    method:'POST',
-    body:JSON.stringify(body)
-  });
-  if(!res.ok) throw new Error(`KPI: HTTP ${res.status}`);
-  const d=await res.json();
+    const res=await sbFetch(`${SURL}/rest/v1/rpc/get_ar_kpis`,{
+      method:'POST',
+      body:JSON.stringify(body)
+    });
+    if(!res.ok) throw new Error(`HTTP ${res.status}`);
+    const d=await res.json();
 
-  const ts=+d.total_sales||0, tg=+d.total_gp||0;
-  const gp=ts?(tg/ts*100):0;
-  G('kS').textContent=fmt(ts);   G('kSs').textContent=(+d.row_count||0).toLocaleString()+' rows';
-  G('kGP').textContent=fmt(tg);  G('kGPs').textContent='GP% '+gp.toFixed(1)+'%';
-  G('kD').textContent=(+d.total_docs||0).toLocaleString();
-  G('kC').textContent=(+d.cust_count||0).toLocaleString();
-  G('kE').textContent=(+d.emp_count||0).toLocaleString();
-  G('kGPP').textContent=gp.toFixed(1)+'%';
+    const ts=+d.total_sales||0, tg=+d.total_gp||0;
+    const gp=ts?(tg/ts*100):0;
+    G('kS').textContent=fmt(ts);   G('kSs').textContent=(+d.row_count||0).toLocaleString()+' rows';
+    G('kGP').textContent=fmt(tg);  G('kGPs').textContent='GP% '+gp.toFixed(1)+'%';
+    G('kD').textContent=(+d.total_docs||0).toLocaleString();
+    G('kC').textContent=(+d.cust_count||0).toLocaleString();
+    G('kE').textContent=(+d.emp_count||0).toLocaleString();
+    G('kGPP').textContent=gp.toFixed(1)+'%';
+  }catch(e){
+    // fallback: ดึงตรงแบบ limit
+    const qs=filterQS();
+    const res=await sbFetch(`${SURL}/rest/v1/${STBL}?select=total_docs,total_sales,total_gp,card_code,sales_employee${qs}&limit=2000`);
+    if(!res.ok) throw new Error(`KPI fallback: HTTP ${res.status}`);
+    const rows=await res.json();
+    const arr=Array.isArray(rows)?rows:[];
+    const ts=arr.reduce((s,r)=>s+(+r.total_sales||0),0);
+    const tg=arr.reduce((s,r)=>s+(+r.total_gp||0),0);
+    const gp=ts?(tg/ts*100):0;
+    G('kS').textContent=fmt(ts);   G('kSs').textContent=arr.length.toLocaleString()+' rows*';
+    G('kGP').textContent=fmt(tg);  G('kGPs').textContent='GP% '+gp.toFixed(1)+'%';
+    G('kD').textContent=arr.reduce((s,r)=>s+(+r.total_docs||0),0).toLocaleString();
+    G('kC').textContent=new Set(arr.map(r=>r.card_code)).size.toLocaleString();
+    G('kE').textContent=new Set(arr.map(r=>r.sales_employee)).size.toLocaleString();
+    G('kGPP').textContent=gp.toFixed(1)+'%';
+  }
 }
 
 // ════ ITEM TYPES ════
@@ -504,12 +559,12 @@ async function loadDocType(){
 async function loadRank(elId, field){
   G(elId).innerHTML='<li class="section-loading" style="height:80px"><div class="mini-spin"></div></li>';
   const qs=filterQS();
-  // paginate ให้ครบ
   let all=[],from=0,ps=1000;
   while(true){
     const res=await sbFetch(`${SURL}/rest/v1/${STBL}?select=${field},card_code,total_sales${qs}&order=total_sales.desc.nullslast&offset=${from}&limit=${ps}`);
     if(!res.ok) throw new Error(`Rank: HTTP ${res.status}`);
     const rows=await res.json();
+    if(!Array.isArray(rows)) break;
     all=all.concat(rows); if(rows.length<ps) break; from+=ps;
   }
   const m={}, codeMap={};
@@ -521,14 +576,25 @@ async function loadRank(elId, field){
   const sorted=Object.entries(m).sort((a,b)=>b[1]-a[1]).slice(0,10);
   const max=sorted[0]?.[1]||1;
   const isCustomer=(field==='card_name');
-  G(elId).innerHTML=sorted.map(([n,v],i)=>`
-    <li class="ri" style="${isCustomer?'cursor:pointer':''}"
-      ${isCustomer?`onclick="openCustomerDrill('${n.replace(/'/g,"\\'")}','${codeMap[n]||''}')"`:''}>
+  const el=G(elId);
+  el.innerHTML=sorted.map(([n,v],i)=>`
+    <li class="ri ${isCustomer?'ri-click':''}" data-name="${encodeURIComponent(n)}" data-code="${encodeURIComponent(codeMap[n]||'')}">
       <div class="rn ${i<3?'top':''}">${i+1}</div>
       <div class="rnm" title="${n}">${n}${isCustomer?` <span style="font-size:9px;color:var(--accent)">→</span>`:''}</div>
       <div class="rb-bg"><div class="rb" style="width:${(v/max*100).toFixed(0)}%"></div></div>
       <div class="rv">${fmt(v)}</div>
     </li>`).join('');
+
+  // bind click event สำหรับ customer
+  if(isCustomer){
+    el.querySelectorAll('.ri-click').forEach(li=>{
+      li.addEventListener('click',()=>{
+        const name=decodeURIComponent(li.dataset.name||'');
+        const code=decodeURIComponent(li.dataset.code||'');
+        openCustomerDrill(name, code);
+      });
+    });
+  }
 }
 
 // ════ DRILL-DOWN ════
@@ -610,7 +676,7 @@ async function openDrill(typeName,clr){
         </div>
       </div>`;
 
-    dRL('dRC',tCust,clr); dRL('dRB',tBrand,clr); dRL('dRE',tSlp,clr); dRL('dRIG',tIG,clr);
+    dRL('dRC',tCust,clr,true); dRL('dRB',tBrand,clr); dRL('dRE',tSlp,clr); dRL('dRIG',tIG,clr);
     window._drillItems=itemRows; window._drillClr=clr;
 
     setTimeout(()=>{
@@ -659,14 +725,26 @@ function filterDrillTable(q){
   G('drillTableWrap').innerHTML=renderItemTableHTML(filt,clr,filt[0]?.total_sales||1);
 }
 
-function dRL(id,entries,clr){
+function dRL(id, entries, clr, clickable=false){
   const el=G(id); if(!el)return;
   const max=entries[0]?.[1]||1;
   el.innerHTML=entries.map(([n,v],i)=>`
-    <li class="ri"><div class="rn ${i<3?'top':''}" style="${i<3?'background:'+clr+';border-color:'+clr:''}">${i+1}</div>
-    <div class="rnm" title="${n}">${n||'—'}</div>
-    <div class="rb-bg"><div class="rb" style="width:${(v/max*100).toFixed(0)}%;background:${clr}"></div></div>
-    <div class="rv">${fmt(v)}</div></li>`).join('');
+    <li class="ri ${clickable?'ri-click':''}" 
+        ${clickable?`data-name="${encodeURIComponent(n)}"`:''}>
+      <div class="rn ${i<3?'top':''}" style="${i<3?'background:'+clr+';border-color:'+clr:''}">${i+1}</div>
+      <div class="rnm" title="${n}">${n||'—'}${clickable?` <span style="font-size:9px;color:${clr}">→</span>`:''}</div>
+      <div class="rb-bg"><div class="rb" style="width:${(v/max*100).toFixed(0)}%;background:${clr}"></div></div>
+      <div class="rv">${fmt(v)}</div>
+    </li>`).join('');
+
+  if(clickable){
+    el.querySelectorAll('.ri-click').forEach(li=>{
+      li.addEventListener('click',()=>{
+        const name=decodeURIComponent(li.dataset.name||'');
+        openCustomerDrill(name,'');
+      });
+    });
+  }
 }
 function closeDrill(){G('dov').classList.remove('open');G('dpanel').classList.remove('open');document.body.style.overflow='';}
 document.addEventListener('keydown',e=>{if(e.key==='Escape')closeDrill();});
@@ -741,11 +819,11 @@ async function openCustomerDrill(custName, cardCode){
       <!-- Item Type + Brand -->
       <div class="dg2">
         <div class="dc">
-          <div class="dc-title">Item Type <span class="badge">by Sales</span></div>
-          <ul class="rl">
-            ${topType.map(([n,v],i)=>`<li class="ri">
+          <div class="dc-title">Item Type <span class="badge">คลิกเพื่อดูรายละเอียด</span></div>
+          <ul class="rl" id="custTypeList">
+            ${topType.map(([n,v],i)=>`<li class="ri ri-click" data-type="${encodeURIComponent(n)}">
               <div class="rn ${i<3?'top':''}" style="${i<3?'background:'+clr+';border-color:'+clr:''}">${i+1}</div>
-              <div class="rnm">${n}</div>
+              <div class="rnm">${n} <span style="font-size:9px;color:${clr}">→</span></div>
               <div class="rb-bg"><div class="rb" style="width:${(v/maxT*100).toFixed(0)}%;background:${clr}"></div></div>
               <div class="rv">${fmt(v)}</div>
             </li>`).join('')}
@@ -778,6 +856,16 @@ async function openCustomerDrill(custName, cardCode){
       </div>`;
 
     setTimeout(()=>{
+      // bind Item Type click → openDrill พร้อม filter customer
+      const typeList=G('custTypeList');
+      if(typeList){
+        typeList.querySelectorAll('.ri-click').forEach((li,i)=>{
+          li.addEventListener('click',()=>{
+            const typeName=decodeURIComponent(li.dataset.type||'');
+            openDrillFiltered(typeName, PAL[i%PAL.length], cardCode, custName);
+          });
+        });
+      }
       const ctx=G('dCM'); if(!ctx)return;
       new Chart(ctx,{type:'bar',
         data:{labels:mL.map(l=>{const[y,m]=l.split('-');return thMo(+m)+' '+(+y+543-2500);}),
@@ -792,7 +880,107 @@ async function openCustomerDrill(custName, cardCode){
   }
 }
 
-// ════ ITEM SEARCH ════
+// ════ DRILL-DOWN: Item Type + Customer Filter ════
+async function openDrillFiltered(typeName, clr, cardCode, custName){
+  G('ddot').style.background=clr;
+  G('dtitle').textContent=typeName;
+  G('dsub').textContent=`เฉพาะ ${custName} · กำลังโหลด...`;
+  G('dbody').innerHTML='<div class="section-loading" style="height:200px"><div class="mini-spin"></div>กำลังโหลดข้อมูล...</div>';
+  G('dov').classList.add('open'); G('dpanel').classList.add('open');
+  document.body.style.overflow='hidden';
+
+  const typeFilter=`&item_type=eq.${encodeURIComponent(typeName)}`;
+  const custFilter=cardCode?`&card_code=eq.${encodeURIComponent(cardCode)}`:`&card_name=eq.${encodeURIComponent(custName)}`;
+  const qs=filterQS();
+
+  try{
+    const [sumRes, itemRes, monthRes]=await Promise.all([
+      sbFetch(`${SURL}/rest/v1/${STBL}?select=total_sales,total_gp,total_docs,card_code,brand,item_group_name${qs}${typeFilter}${custFilter}&limit=2000`),
+      sbFetch(`${SURL}/rest/v1/${STBL2}?select=item_code,item_name,brand,total_qty,total_sales,total_gp,total_cost,gp_pct,total_docs${aYr?'&yr=eq.'+aYr:''}&item_type=eq.${encodeURIComponent(typeName)}&order=total_sales.desc.nullslast&limit=1000`),
+      sbFetch(`${SURL}/rest/v1/${STBL}?select=ym,total_sales${qs}${typeFilter}${custFilter}&order=ym.asc&limit=2000`)
+    ]);
+
+    const [sj,ij,mj]=await Promise.all([sumRes.json(),itemRes.json(),monthRes.json()]);
+    const sumRows=Array.isArray(sj)?sj:[];
+    const itemRows=Array.isArray(ij)?ij:[];
+    const monthRows=Array.isArray(mj)?mj:[];
+
+    const ts=sumRows.reduce((s,r)=>s+(+r.total_sales||0),0);
+    const tg=sumRows.reduce((s,r)=>s+(+r.total_gp||0),0);
+    const td=sumRows.reduce((s,r)=>s+(+r.total_docs||0),0);
+    const gpPct=ts?(tg/ts*100).toFixed(1):'0.0';
+
+    // Monthly
+    const bm={};
+    monthRows.forEach(r=>{if(r.ym)bm[r.ym]=(bm[r.ym]||0)+(+r.total_sales||0);});
+    const mL=Object.keys(bm).sort(), mV=mL.map(k=>bm[k]);
+
+    // Top Brand
+    const byBrand={};
+    sumRows.forEach(r=>{const b=r.brand||'—';byBrand[b]=(byBrand[b]||0)+(+r.total_sales||0);});
+    const topBrand=Object.entries(byBrand).sort((a,b)=>b[1]-a[1]).slice(0,6);
+    const maxB=topBrand[0]?.[1]||1;
+
+    const maxS=itemRows[0]?.total_sales||1;
+    G('dsub').textContent=`${custName} · ${typeName} · ${itemRows.length} SKU`;
+
+    G('dbody').innerHTML=`
+      <div class="dkpis">
+        <div class="dk" style="--dc:${clr}"><div class="dk-lbl">ยอดขาย</div><div class="dk-val" style="color:${clr}">${fmt(ts)}</div><div class="dk-sub">${sumRows.length} rows</div></div>
+        <div class="dk" style="--dc:var(--a2)"><div class="dk-lbl">Gross Profit</div><div class="dk-val">${fmt(tg)}</div><div class="dk-sub">GP% ${gpPct}%</div></div>
+        <div class="dk" style="--dc:var(--a3)"><div class="dk-lbl">Documents</div><div class="dk-val">${td.toLocaleString()}</div><div class="dk-sub">total</div></div>
+        <div class="dk" style="--dc:#8B5CF6"><div class="dk-lbl">SKU</div><div class="dk-val">${itemRows.length}</div><div class="dk-sub">รายการสินค้า</div></div>
+      </div>
+
+      <!-- Monthly -->
+      <div class="dc" style="margin-bottom:10px">
+        <div class="dc-title">ยอดขายรายเดือน <span class="badge">${mL.length} เดือน</span></div>
+        <canvas id="dCM2" height="100"></canvas>
+      </div>
+
+      <!-- Top Brand -->
+      <div class="dc" style="margin-bottom:12px">
+        <div class="dc-title">Top Brand <span class="badge">by Sales</span></div>
+        <ul class="rl">
+          ${topBrand.map(([n,v],i)=>`<li class="ri">
+            <div class="rn ${i<3?'top':''}" style="${i<3?'background:'+clr+';border-color:'+clr:''}">${i+1}</div>
+            <div class="rnm">${n}</div>
+            <div class="rb-bg"><div class="rb" style="width:${(v/maxB*100).toFixed(0)}%;background:${clr}"></div></div>
+            <div class="rv">${fmt(v)}</div>
+          </li>`).join('')}
+        </ul>
+      </div>
+
+      <!-- Item Table -->
+      <div class="itbl-wrap">
+        <div class="itbl-hdr">
+          <div class="itbl-title">📦 รายการสินค้า <span class="badge">${itemRows.length} รายการ</span></div>
+          <input class="itbl-search" placeholder="ค้นหา..." oninput="filterDrillTable(this.value)">
+        </div>
+        <div style="overflow-x:auto" id="drillTableWrap">
+          ${renderItemTableHTML(itemRows, clr, maxS)}
+        </div>
+        <div style="padding:8px 14px;font-size:11px;color:var(--muted);font-family:var(--mono);border-top:1px solid var(--border);background:#FAFAF8">
+          ${itemRows.length} รายการ · ${fmt(ts)} · GP ${gpPct}%
+        </div>
+      </div>`;
+
+    window._drillItems=itemRows; window._drillClr=clr;
+
+    setTimeout(()=>{
+      const ctx=G('dCM2'); if(!ctx)return;
+      new Chart(ctx,{type:'bar',
+        data:{labels:mL.map(l=>{const[y,m]=l.split('-');return thMo(+m)+' '+(+y+543-2500);}),
+              datasets:[{data:mV,backgroundColor:clr+'2A',borderColor:clr,borderWidth:2,borderRadius:3}]},
+        options:{responsive:true,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>' '+fmt(c.parsed.y)}}},
+          scales:{x:{grid:{color:'#E5E3DC'},ticks:{font:{family:'DM Sans',size:10}}},
+                  y:{grid:{color:'#E5E3DC'},ticks:{font:{family:'DM Sans',size:10}}}}}});
+    },60);
+
+  }catch(e){
+    G('dbody').innerHTML=`<div class="sr-none">❌ ${e.message}<br><small>${typeName} / ${custName}</small></div>`;
+  }
+}
 async function doSearch(){
   const q=G('isInput').value.trim();
   if(!q){clearSearch();return;}
