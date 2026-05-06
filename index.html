@@ -542,14 +542,15 @@ async function openDrill(typeName,clr){
 
   try{
     const [sumRes, itemRes, monthRes] = await Promise.all([
-      sbFetch(`${SURL}/rest/v1/${STBL}?select=total_sales,total_gp,total_docs,card_code,card_name,brand,sales_employee,item_group_name${qs}${typeFilter}&limit=5000`),
+      sbFetch(`${SURL}/rest/v1/${STBL}?select=total_sales,total_gp,total_docs,card_code,card_name,brand,sales_employee,item_group_name${qs}${typeFilter}&limit=2000`),
       sbFetch(`${SURL}/rest/v1/${STBL2}?select=item_code,item_name,brand,total_qty,total_sales,total_gp,total_cost,gp_pct,total_docs${aYr?'&yr=eq.'+aYr:''}&item_type=eq.${encodeURIComponent(typeName)}&order=total_sales.desc.nullslast&limit=1000`),
-      sbFetch(`${SURL}/rest/v1/${STBL}?select=ym,total_sales${qs}${typeFilter}&order=ym.asc&limit=5000`)
+      sbFetch(`${SURL}/rest/v1/${STBL}?select=ym,total_sales${qs}${typeFilter}&order=ym.asc&limit=2000`)
     ]);
 
-    const sumRows=await sumRes.json();
-    const itemRows=await itemRes.json();
-    const monthRows=await monthRes.json();
+    const [sj, ij, mj] = await Promise.all([sumRes.json(), itemRes.json(), monthRes.json()]);
+    const sumRows  = Array.isArray(sj) ? sj : [];
+    const itemRows = Array.isArray(ij) ? ij : [];
+    const monthRows= Array.isArray(mj) ? mj : [];
 
     const ts=sumRows.reduce((s,r)=>s+(+r.total_sales||0),0);
     const tg=sumRows.reduce((s,r)=>s+(+r.total_gp||0),0);
@@ -619,7 +620,9 @@ async function openDrill(typeName,clr){
                   y:{grid:{color:'#E5E3DC'},ticks:{font:{family:'DM Sans',size:10}}}}}});
     },60);
 
-  }catch(e){ G('dbody').innerHTML=`<div class="sr-none">❌ ${e.message}</div>`; }
+  }catch(e){
+    G('dbody').innerHTML=`<div class="sr-none">❌ ${e.message}<br><small style="color:var(--muted)">Item Type: "${typeName}"</small></div>`;
+  }
 }
 
 function renderItemTableHTML(items,clr,maxS){
