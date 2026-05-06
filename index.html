@@ -283,8 +283,16 @@ tr:last-child td{border-bottom:none}
 // ════ CONFIG ════
 let SURL=localStorage.getItem('eco_url')||'';
 let SKEY=localStorage.getItem('eco_key')||'';
-let STBL=localStorage.getItem('eco_tbl')||'ar_sales_summary';
-let STBL2=localStorage.getItem('eco_tbl2')||'ar_item_summary';
+// ════ CONFIG — ใส่ค่าตรงนี้เลย ไม่ต้องกรอกทุกครั้ง ════
+const _SURL = 'https://iojhinczacwuvirzlgut.supabase.co';
+const _SKEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlvamhpbmN6YWN3dXZpcnpsZ3V0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgwNTQzODksImV4cCI6MjA5MzYzMDM4OX0.opHHtidHrRt54VD-6yjP-i7uSOTlTHJbkFmCYh7Cg7s';
+const _STBL  = 'ar_sales_summary';
+const _STBL2 = 'ar_item_summary';
+
+let SURL  = localStorage.getItem('eco_url')  || _SURL;
+let SKEY  = localStorage.getItem('eco_key')  || _SKEY;
+let STBL  = localStorage.getItem('eco_tbl')  || _STBL;
+let STBL2 = localStorage.getItem('eco_tbl2') || _STBL2;
 const PAL=['#C8651A','#2A6496','#2E7D5B','#8B5CF6','#D97706','#DB2777','#0891B2','#65A30D','#DC2626','#7C3AED','#059669','#B45309'];
 
 // ════ UTILS (ต้องอยู่บนสุดก่อน function อื่น) ════
@@ -302,8 +310,9 @@ let charts={}, srCharts={}, isDemo=false, demoData=[];
 
 // ════ INIT ════
 window.addEventListener('DOMContentLoaded',()=>{
-  if(!SURL||!SKEY) G('cfgModal').style.display='flex';
-  else init();
+  // ถ้ามี config (hardcode หรือ localStorage) → โหลดเลย ไม่ต้องถาม
+  if(SURL && SKEY) init();
+  else G('cfgModal').style.display='flex';
 });
 
 // ════ CONFIG ════
@@ -408,21 +417,26 @@ G('fCG').onchange=()=>{aCG=G('fCG').value; applyF();};
 
 // ════ KPIs ════
 async function loadKPIs(){
-  const url=`${SURL}/rest/v1/rpc/get_ar_kpis`;
-  // ถ้าไม่มี RPC function ใช้ aggregate ผ่าน REST แทน
-  const qs=filterQS({'select':'total_docs,total_sales,total_gp,card_code,sales_employee'});
-  const res=await sbFetch(`${SURL}/rest/v1/${STBL}?select=total_docs,total_sales,total_gp,card_code,sales_employee${qs}&limit=5000`);
-  if(!res.ok) throw new Error(`KPI: HTTP ${res.status}`);
-  const rows=await res.json();
-  const ts=rows.reduce((s,r)=>s+(+r.total_sales||0),0);
-  const tg=rows.reduce((s,r)=>s+(+r.total_gp||0),0);
-  const td=rows.reduce((s,r)=>s+(+r.total_docs||0),0);
+  // ดึงแบบ paginate ให้ครบทุก rows
+  let all=[],from=0,ps=1000;
+  while(true){
+    const qs=filterQS();
+    const res=await sbFetch(`${SURL}/rest/v1/${STBL}?select=total_docs,total_sales,total_gp,card_code,sales_employee${qs}&offset=${from}&limit=${ps}`);
+    if(!res.ok) throw new Error(`KPI: HTTP ${res.status}`);
+    const rows=await res.json();
+    all=all.concat(rows);
+    if(rows.length<ps) break;
+    from+=ps;
+  }
+  const ts=all.reduce((s,r)=>s+(+r.total_sales||0),0);
+  const tg=all.reduce((s,r)=>s+(+r.total_gp||0),0);
+  const td=all.reduce((s,r)=>s+(+r.total_docs||0),0);
   const gp=ts?(tg/ts*100):0;
-  G('kS').textContent=fmt(ts); G('kSs').textContent=rows.length.toLocaleString()+' rows';
+  G('kS').textContent=fmt(ts); G('kSs').textContent=all.length.toLocaleString()+' rows';
   G('kGP').textContent=fmt(tg); G('kGPs').textContent='GP% '+gp.toFixed(1)+'%';
   G('kD').textContent=td.toLocaleString();
-  G('kC').textContent=new Set(rows.map(r=>r.card_code)).size.toLocaleString();
-  G('kE').textContent=new Set(rows.map(r=>r.sales_employee)).size.toLocaleString();
+  G('kC').textContent=new Set(all.map(r=>r.card_code)).size.toLocaleString();
+  G('kE').textContent=new Set(all.map(r=>r.sales_employee)).size.toLocaleString();
   G('kGPP').textContent=gp.toFixed(1)+'%';
 }
 
