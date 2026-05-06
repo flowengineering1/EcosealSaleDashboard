@@ -892,23 +892,24 @@ async function openDrillFiltered(typeName, clr, cardCode, custName){
 
   const typeFilter=`&item_type=eq.${encodeURIComponent(typeName)}`;
   const custFilter=cardCode?`&card_code=eq.${encodeURIComponent(cardCode)}`:`&card_name=eq.${encodeURIComponent(custName)}`;
+  const yrFilter=aYr?`&yr=eq.${aYr}`:'';
   const qs=filterQS();
 
   try{
-    const [sumRes, itemRes, monthRes]=await Promise.all([
-      sbFetch(`${SURL}/rest/v1/${STBL}?select=total_sales,total_gp,total_docs,card_code,brand,item_group_name${qs}${typeFilter}${custFilter}&limit=2000`),
-      sbFetch(`${SURL}/rest/v1/${STBL2}?select=item_code,item_name,brand,total_qty,total_sales,total_gp,total_cost,gp_pct,total_docs${aYr?'&yr=eq.'+aYr:''}&item_type=eq.${encodeURIComponent(typeName)}&order=total_sales.desc.nullslast&limit=1000`),
+    // ดึงจาก ar_cust_item_summary — มีทั้ง customer + item type
+    // ดึงจาก ar_sales_summary สำหรับ monthly trend
+    const [custItemRes, monthRes]=await Promise.all([
+      sbFetch(`${SURL}/rest/v1/ar_cust_item_summary?select=brand,item_group_name,total_docs,total_qty,total_sales,total_gp,total_cost,gp_pct${yrFilter}${typeFilter}${custFilter}&order=total_sales.desc.nullslast&limit=2000`),
       sbFetch(`${SURL}/rest/v1/${STBL}?select=ym,total_sales${qs}${typeFilter}${custFilter}&order=ym.asc&limit=2000`)
     ]);
 
-    const [sj,ij,mj]=await Promise.all([sumRes.json(),itemRes.json(),monthRes.json()]);
-    const sumRows=Array.isArray(sj)?sj:[];
-    const itemRows=Array.isArray(ij)?ij:[];
+    const [cij, mj]=await Promise.all([custItemRes.json(), monthRes.json()]);
+    const custItemRows=Array.isArray(cij)?cij:[];
     const monthRows=Array.isArray(mj)?mj:[];
 
-    const ts=sumRows.reduce((s,r)=>s+(+r.total_sales||0),0);
-    const tg=sumRows.reduce((s,r)=>s+(+r.total_gp||0),0);
-    const td=sumRows.reduce((s,r)=>s+(+r.total_docs||0),0);
+    const ts=custItemRows.reduce((s,r)=>s+(+r.total_sales||0),0);
+    const tg=custItemRows.reduce((s,r)=>s+(+r.total_gp||0),0);
+    const td=custItemRows.reduce((s,r)=>s+(+r.total_docs||0),0);
     const gpPct=ts?(tg/ts*100).toFixed(1):'0.0';
 
     // Monthly
@@ -916,32 +917,35 @@ async function openDrillFiltered(typeName, clr, cardCode, custName){
     monthRows.forEach(r=>{if(r.ym)bm[r.ym]=(bm[r.ym]||0)+(+r.total_sales||0);});
     const mL=Object.keys(bm).sort(), mV=mL.map(k=>bm[k]);
 
-    // Top Brand
+    // Top Brand จาก ar_cust_item_summary
     const byBrand={};
-    sumRows.forEach(r=>{const b=r.brand||'—';byBrand[b]=(byBrand[b]||0)+(+r.total_sales||0);});
-    const topBrand=Object.entries(byBrand).sort((a,b)=>b[1]-a[1]).slice(0,6);
+    custItemRows.forEach(r=>{const b=r.brand||'—';byBrand[b]=(byBrand[b]||0)+(+r.total_sales||0);});
+    const topBrand=Object.entries(byBrand).sort((a,b)=>b[1]-a[1]).slice(0,8);
     const maxB=topBrand[0]?.[1]||1;
 
+    // ดึง item detail จาก ar_item_summary (ยังใช้ได้ — แสดงสินค้าของ item type นั้น)
+    const itemRes=await sbFetch(`${SURL}/rest/v1/${STBL2}?select=item_code,item_name,brand,total_qty,total_sales,total_gp,gp_pct,total_docs${yrFilter}&item_type=eq.${encodeURIComponent(typeName)}&order=total_sales.desc.nullslast&limit=500`);
+    const ij=await itemRes.json();
+    const itemRows=Array.isArray(ij)?ij:[];
     const maxS=itemRows[0]?.total_sales||1;
-    G('dsub').textContent=`${custName} · ${typeName} · ${itemRows.length} SKU`;
+
+    G('dsub').textContent=`${custName} · ${typeName} · ${custItemRows.length} รายการ`;
 
     G('dbody').innerHTML=`
       <div class="dkpis">
-        <div class="dk" style="--dc:${clr}"><div class="dk-lbl">ยอดขาย</div><div class="dk-val" style="color:${clr}">${fmt(ts)}</div><div class="dk-sub">${sumRows.length} rows</div></div>
+        <div class="dk" style="--dc:${clr}"><div class="dk-lbl">ยอดขาย</div><div class="dk-val" style="color:${clr}">${fmt(ts)}</div><div class="dk-sub">เฉพาะบริษัทนี้</div></div>
         <div class="dk" style="--dc:var(--a2)"><div class="dk-lbl">Gross Profit</div><div class="dk-val">${fmt(tg)}</div><div class="dk-sub">GP% ${gpPct}%</div></div>
         <div class="dk" style="--dc:var(--a3)"><div class="dk-lbl">Documents</div><div class="dk-val">${td.toLocaleString()}</div><div class="dk-sub">total</div></div>
-        <div class="dk" style="--dc:#8B5CF6"><div class="dk-lbl">SKU</div><div class="dk-val">${itemRows.length}</div><div class="dk-sub">รายการสินค้า</div></div>
+        <div class="dk" style="--dc:#8B5CF6"><div class="dk-lbl">Brand</div><div class="dk-val">${topBrand.length}</div><div class="dk-sub">ที่ซื้อ</div></div>
       </div>
 
-      <!-- Monthly -->
       <div class="dc" style="margin-bottom:10px">
         <div class="dc-title">ยอดขายรายเดือน <span class="badge">${mL.length} เดือน</span></div>
         <canvas id="dCM2" height="100"></canvas>
       </div>
 
-      <!-- Top Brand -->
       <div class="dc" style="margin-bottom:12px">
-        <div class="dc-title">Top Brand <span class="badge">by Sales</span></div>
+        <div class="dc-title">Brand ที่ ${custName} ซื้อ <span class="badge">by Sales</span></div>
         <ul class="rl">
           ${topBrand.map(([n,v],i)=>`<li class="ri">
             <div class="rn ${i<3?'top':''}" style="${i<3?'background:'+clr+';border-color:'+clr:''}">${i+1}</div>
@@ -952,17 +956,16 @@ async function openDrillFiltered(typeName, clr, cardCode, custName){
         </ul>
       </div>
 
-      <!-- Item Table -->
       <div class="itbl-wrap">
         <div class="itbl-hdr">
-          <div class="itbl-title">📦 รายการสินค้า <span class="badge">${itemRows.length} รายการ</span></div>
+          <div class="itbl-title">📦 รายการสินค้า ${typeName} <span class="badge">${itemRows.length} รายการ</span></div>
           <input class="itbl-search" placeholder="ค้นหา..." oninput="filterDrillTable(this.value)">
         </div>
         <div style="overflow-x:auto" id="drillTableWrap">
           ${renderItemTableHTML(itemRows, clr, maxS)}
         </div>
         <div style="padding:8px 14px;font-size:11px;color:var(--muted);font-family:var(--mono);border-top:1px solid var(--border);background:#FAFAF8">
-          ${itemRows.length} รายการ · ${fmt(ts)} · GP ${gpPct}%
+          ${itemRows.length} รายการ · ยอดรวม ${custName}: ${fmt(ts)} · GP ${gpPct}%
         </div>
       </div>`;
 
@@ -982,6 +985,8 @@ async function openDrillFiltered(typeName, clr, cardCode, custName){
     G('dbody').innerHTML=`<div class="sr-none">❌ ${e.message}<br><small>${typeName} / ${custName}</small></div>`;
   }
 }
+
+// ════ ITEM SEARCH ════
 async function doSearch(){
   const q=G('isInput').value.trim();
   if(!q){clearSearch();return;}
