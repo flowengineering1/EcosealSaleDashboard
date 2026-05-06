@@ -407,28 +407,28 @@ G('fY').onchange =()=>{aYr=G('fY').value; applyF();};
 G('fIG').onchange=()=>{aIG=G('fIG').value; applyF();};
 G('fCG').onchange=()=>{aCG=G('fCG').value; applyF();};
 
-// ════ KPIs ════
+// ════ KPIs — ใช้ RPC function แทน paginate ════
 async function loadKPIs(){
-  let all=[],from=0,ps=1000;
-  const qs=filterQS(); // สร้างครั้งเดียวก่อน loop
-  while(true){
-    const res=await sbFetch(`${SURL}/rest/v1/${STBL}?select=total_docs,total_sales,total_gp,card_code,sales_employee${qs}&offset=${from}&limit=${ps}`);
-    if(!res.ok) throw new Error(`KPI: HTTP ${res.status}`);
-    const rows=await res.json();
-    if(!Array.isArray(rows)) break;
-    all=all.concat(rows);
-    if(rows.length<ps) break;
-    from+=ps;
-  }
-  const ts=all.reduce((s,r)=>s+(+r.total_sales||0),0);
-  const tg=all.reduce((s,r)=>s+(+r.total_gp||0),0);
-  const td=all.reduce((s,r)=>s+(+r.total_docs||0),0);
+  const body={};
+  if(aDT) body.p_doc_type=aDT;
+  if(aYr) body.p_yr=parseInt(aYr);
+  if(aIG) body.p_item_group=aIG;
+  if(aCG) body.p_group_customer=aCG;
+
+  const res=await sbFetch(`${SURL}/rest/v1/rpc/get_ar_kpis`,{
+    method:'POST',
+    body:JSON.stringify(body)
+  });
+  if(!res.ok) throw new Error(`KPI: HTTP ${res.status}`);
+  const d=await res.json();
+
+  const ts=+d.total_sales||0, tg=+d.total_gp||0;
   const gp=ts?(tg/ts*100):0;
-  G('kS').textContent=fmt(ts); G('kSs').textContent=all.length.toLocaleString()+' rows';
-  G('kGP').textContent=fmt(tg); G('kGPs').textContent='GP% '+gp.toFixed(1)+'%';
-  G('kD').textContent=td.toLocaleString();
-  G('kC').textContent=new Set(all.map(r=>r.card_code)).size.toLocaleString();
-  G('kE').textContent=new Set(all.map(r=>r.sales_employee)).size.toLocaleString();
+  G('kS').textContent=fmt(ts);   G('kSs').textContent=(+d.row_count||0).toLocaleString()+' rows';
+  G('kGP').textContent=fmt(tg);  G('kGPs').textContent='GP% '+gp.toFixed(1)+'%';
+  G('kD').textContent=(+d.total_docs||0).toLocaleString();
+  G('kC').textContent=(+d.cust_count||0).toLocaleString();
+  G('kE').textContent=(+d.emp_count||0).toLocaleString();
   G('kGPP').textContent=gp.toFixed(1)+'%';
 }
 
