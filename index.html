@@ -165,7 +165,7 @@ tr:last-child td{border-bottom:none}
 <body>
 
 <!-- Config -->
-<div class="cov" id="cfgModal">
+<div class="cov" id="cfgModal" style="display:none">
   <div class="cbox">
     <h2>⚙️ ตั้งค่า Supabase</h2>
     <p>Project URL และ Anon Key จาก Supabase → Settings → API Keys (Legacy tab)</p>
@@ -409,13 +409,13 @@ G('fCG').onchange=()=>{aCG=G('fCG').value; applyF();};
 
 // ════ KPIs ════
 async function loadKPIs(){
-  // ดึงแบบ paginate ให้ครบทุก rows
   let all=[],from=0,ps=1000;
+  const qs=filterQS(); // สร้างครั้งเดียวก่อน loop
   while(true){
-    const qs=filterQS();
     const res=await sbFetch(`${SURL}/rest/v1/${STBL}?select=total_docs,total_sales,total_gp,card_code,sales_employee${qs}&offset=${from}&limit=${ps}`);
     if(!res.ok) throw new Error(`KPI: HTTP ${res.status}`);
     const rows=await res.json();
+    if(!Array.isArray(rows)) break;
     all=all.concat(rows);
     if(rows.length<ps) break;
     from+=ps;
@@ -504,17 +504,28 @@ async function loadDocType(){
 async function loadRank(elId, field){
   G(elId).innerHTML='<li class="section-loading" style="height:80px"><div class="mini-spin"></div></li>';
   const qs=filterQS();
-  const res=await sbFetch(`${SURL}/rest/v1/${STBL}?select=${field},total_sales${qs}&order=total_sales.desc.nullslast&limit=5000`);
-  if(!res.ok) throw new Error(`Rank: HTTP ${res.status}`);
-  const rows=await res.json();
-  const m={};
-  rows.forEach(r=>{const k=r[field]||'—';m[k]=(m[k]||0)+(+r.total_sales||0);});
+  // paginate ให้ครบ
+  let all=[],from=0,ps=1000;
+  while(true){
+    const res=await sbFetch(`${SURL}/rest/v1/${STBL}?select=${field},card_code,total_sales${qs}&order=total_sales.desc.nullslast&offset=${from}&limit=${ps}`);
+    if(!res.ok) throw new Error(`Rank: HTTP ${res.status}`);
+    const rows=await res.json();
+    all=all.concat(rows); if(rows.length<ps) break; from+=ps;
+  }
+  const m={}, codeMap={};
+  all.forEach(r=>{
+    const k=r[field]||'—';
+    m[k]=(m[k]||0)+(+r.total_sales||0);
+    if(r.card_code) codeMap[k]=r.card_code;
+  });
   const sorted=Object.entries(m).sort((a,b)=>b[1]-a[1]).slice(0,10);
   const max=sorted[0]?.[1]||1;
+  const isCustomer=(field==='card_name');
   G(elId).innerHTML=sorted.map(([n,v],i)=>`
-    <li class="ri">
+    <li class="ri" style="${isCustomer?'cursor:pointer':''}"
+      ${isCustomer?`onclick="openCustomerDrill('${n.replace(/'/g,"\\'")}','${codeMap[n]||''}')"`:''}>
       <div class="rn ${i<3?'top':''}">${i+1}</div>
-      <div class="rnm" title="${n}">${n}</div>
+      <div class="rnm" title="${n}">${n}${isCustomer?` <span style="font-size:9px;color:var(--accent)">→</span>`:''}</div>
       <div class="rb-bg"><div class="rb" style="width:${(v/max*100).toFixed(0)}%"></div></div>
       <div class="rv">${fmt(v)}</div>
     </li>`).join('');
@@ -659,6 +670,127 @@ function dRL(id,entries,clr){
 }
 function closeDrill(){G('dov').classList.remove('open');G('dpanel').classList.remove('open');document.body.style.overflow='';}
 document.addEventListener('keydown',e=>{if(e.key==='Escape')closeDrill();});
+
+// ════ CUSTOMER DRILL-DOWN ════
+async function openCustomerDrill(custName, cardCode){
+  G('ddot').style.background='#2A6496';
+  G('dtitle').textContent=custName;
+  G('dsub').textContent='กำลังโหลด...';
+  G('dbody').innerHTML='<div class="section-loading" style="height:200px"><div class="mini-spin"></div>กำลังโหลดข้อมูล...</div>';
+  G('dov').classList.add('open'); G('dpanel').classList.add('open');
+  document.body.style.overflow='hidden';
+
+  const clr='#2A6496';
+  const custFilter=cardCode?`&card_code=eq.${encodeURIComponent(cardCode)}`:`&card_name=eq.${encodeURIComponent(custName)}`;
+  const qs=filterQS();
+
+  try{
+    // ดึงข้อมูล summary + items ของ customer นี้
+    const [sumRes, monthRes] = await Promise.all([
+      sbFetch(`${SURL}/rest/v1/${STBL}?select=total_sales,total_gp,total_docs,item_type,brand,item_group_name${qs}${custFilter}&limit=2000`),
+      sbFetch(`${SURL}/rest/v1/${STBL}?select=ym,total_sales${qs}${custFilter}&order=ym.asc&limit=2000`)
+    ]);
+
+    const [sj2, mj2] = await Promise.all([sumRes.json(), monthRes.json()]);
+    const sumRows  = Array.isArray(sj2) ? sj2 : [];
+    const monthRows= Array.isArray(mj2) ? mj2 : [];
+
+    // ดึง item summary แยก
+    const itemRes=await sbFetch(`${SURL}/rest/v1/${STBL}?select=item_group_name,item_type,brand,total_sales,total_gp,total_docs,total_qty${qs}${custFilter}&limit=2000`);
+    const ij2=await itemRes.json();
+    const itemRows=Array.isArray(ij2)?ij2:[];
+
+    const ts=sumRows.reduce((s,r)=>s+(+r.total_sales||0),0);
+    const tg=sumRows.reduce((s,r)=>s+(+r.total_gp||0),0);
+    const td=sumRows.reduce((s,r)=>s+(+r.total_docs||0),0);
+    const gpPct=ts?(tg/ts*100).toFixed(1):'0.0';
+
+    // Monthly
+    const bm={};
+    monthRows.forEach(r=>{if(r.ym)bm[r.ym]=(bm[r.ym]||0)+(+r.total_sales||0);});
+    const mL=Object.keys(bm).sort(), mV=mL.map(k=>bm[k]);
+
+    // Top item type
+    const byType={},byBrand={},byIG={};
+    itemRows.forEach(r=>{
+      const t=r.item_type||'—'; byType[t]=(byType[t]||0)+(+r.total_sales||0);
+      const b=r.brand||'—'; byBrand[b]=(byBrand[b]||0)+(+r.total_sales||0);
+      const g=r.item_group_name||'—'; byIG[g]=(byIG[g]||0)+(+r.total_sales||0);
+    });
+    const topType=Object.entries(byType).sort((a,b)=>b[1]-a[1]).slice(0,8);
+    const topBrand=Object.entries(byBrand).sort((a,b)=>b[1]-a[1]).slice(0,8);
+    const topIG=Object.entries(byIG).sort((a,b)=>b[1]-a[1]).slice(0,8);
+    const maxT=topType[0]?.[1]||1, maxB=topBrand[0]?.[1]||1, maxIG=topIG[0]?.[1]||1;
+
+    G('dsub').textContent=`${mL.length} เดือน · ${td.toLocaleString()} docs`;
+
+    G('dbody').innerHTML=`
+      <div class="dkpis">
+        <div class="dk" style="--dc:${clr}"><div class="dk-lbl">ยอดขาย</div><div class="dk-val" style="color:${clr}">${fmt(ts)}</div><div class="dk-sub">${sumRows.length} rows</div></div>
+        <div class="dk" style="--dc:var(--a2)"><div class="dk-lbl">Gross Profit</div><div class="dk-val">${fmt(tg)}</div><div class="dk-sub">GP% ${gpPct}%</div></div>
+        <div class="dk" style="--dc:var(--a3)"><div class="dk-lbl">Documents</div><div class="dk-val">${td.toLocaleString()}</div><div class="dk-sub">total</div></div>
+        <div class="dk" style="--dc:#D97706"><div class="dk-lbl">Item Types</div><div class="dk-val">${topType.length}</div><div class="dk-sub">ประเภทสินค้า</div></div>
+      </div>
+
+      <!-- Monthly -->
+      <div class="dc" style="margin-bottom:10px">
+        <div class="dc-title">ยอดขายรายเดือน <span class="badge">${mL.length} เดือน</span></div>
+        <canvas id="dCM" height="110"></canvas>
+      </div>
+
+      <!-- Item Type + Brand -->
+      <div class="dg2">
+        <div class="dc">
+          <div class="dc-title">Item Type <span class="badge">by Sales</span></div>
+          <ul class="rl">
+            ${topType.map(([n,v],i)=>`<li class="ri">
+              <div class="rn ${i<3?'top':''}" style="${i<3?'background:'+clr+';border-color:'+clr:''}">${i+1}</div>
+              <div class="rnm">${n}</div>
+              <div class="rb-bg"><div class="rb" style="width:${(v/maxT*100).toFixed(0)}%;background:${clr}"></div></div>
+              <div class="rv">${fmt(v)}</div>
+            </li>`).join('')}
+          </ul>
+        </div>
+        <div class="dc">
+          <div class="dc-title">Top Brand <span class="badge">by Sales</span></div>
+          <ul class="rl">
+            ${topBrand.map(([n,v],i)=>`<li class="ri">
+              <div class="rn ${i<3?'top':''}" style="${i<3?'background:'+clr+';border-color:'+clr:''}">${i+1}</div>
+              <div class="rnm">${n}</div>
+              <div class="rb-bg"><div class="rb" style="width:${(v/maxB*100).toFixed(0)}%;background:${clr}"></div></div>
+              <div class="rv">${fmt(v)}</div>
+            </li>`).join('')}
+          </ul>
+        </div>
+      </div>
+
+      <!-- Item Group -->
+      <div class="dc" style="margin-bottom:10px">
+        <div class="dc-title">Item Group <span class="badge">by Sales</span></div>
+        <ul class="rl">
+          ${topIG.map(([n,v],i)=>`<li class="ri">
+            <div class="rn ${i<3?'top':''}" style="${i<3?'background:'+clr+';border-color:'+clr:''}">${i+1}</div>
+            <div class="rnm">${n}</div>
+            <div class="rb-bg"><div class="rb" style="width:${(v/maxIG*100).toFixed(0)}%;background:${clr}"></div></div>
+            <div class="rv">${fmt(v)}</div>
+          </li>`).join('')}
+        </ul>
+      </div>`;
+
+    setTimeout(()=>{
+      const ctx=G('dCM'); if(!ctx)return;
+      new Chart(ctx,{type:'bar',
+        data:{labels:mL.map(l=>{const[y,m]=l.split('-');return thMo(+m)+' '+(+y+543-2500);}),
+              datasets:[{data:mV,backgroundColor:clr+'2A',borderColor:clr,borderWidth:2,borderRadius:3}]},
+        options:{responsive:true,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>' '+fmt(c.parsed.y)}}},
+          scales:{x:{grid:{color:'#E5E3DC'},ticks:{font:{family:'DM Sans',size:10}}},
+                  y:{grid:{color:'#E5E3DC'},ticks:{font:{family:'DM Sans',size:10}}}}}});
+    },60);
+
+  }catch(e){
+    G('dbody').innerHTML=`<div class="sr-none">❌ ${e.message}</div>`;
+  }
+}
 
 // ════ ITEM SEARCH ════
 async function doSearch(){
